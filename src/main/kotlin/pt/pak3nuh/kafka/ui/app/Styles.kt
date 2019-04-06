@@ -1,4 +1,4 @@
-package com.example.demo.app
+package pt.pak3nuh.kafka.ui.app
 
 import javafx.scene.text.FontWeight
 import tornadofx.Stylesheet

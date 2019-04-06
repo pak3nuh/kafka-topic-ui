@@ -1,6 +1,6 @@
-package com.example.demo.view
+package pt.pak3nuh.kafka.ui.view
 
-import com.example.demo.app.Styles
+import pt.pak3nuh.kafka.ui.app.Styles
 import tornadofx.View
 import tornadofx.addClass
 import tornadofx.hbox
