@@ -19,4 +19,10 @@ class BrokerService {
 
 }
 
-class Broker(private val host: String, private val port: Int, private val adminClient: AdminClient)
+class Broker(private val host: String, private val port: Int, private val adminClient: AdminClient) {
+    suspend fun listTopics(): Sequence<Topic> {
+        return adminClient.listTopics().names().thenApply { it.map(::Topic).asSequence() }.await()
+    }
+}
+
+data class Topic(val name: String)
