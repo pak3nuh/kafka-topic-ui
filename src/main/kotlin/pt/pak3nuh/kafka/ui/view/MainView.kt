@@ -1,15 +1,55 @@
 package pt.pak3nuh.kafka.ui.view
 
-import pt.pak3nuh.kafka.ui.app.Styles
-import tornadofx.View
-import tornadofx.addClass
-import tornadofx.hbox
-import tornadofx.label
+import javafx.geometry.Pos
+import javafx.scene.control.TextField
+import pt.pak3nuh.kafka.ui.app.ApplicationException
+import pt.pak3nuh.kafka.ui.service.Broker
+import pt.pak3nuh.kafka.ui.service.BrokerService
+import tornadofx.*
 
-class MainView : View("Hello TornadoFX") {
-    override val root = hbox {
-        label(title) {
-            addClass(Styles.heading)
+class MainView : View("Login") {
+
+    private val brokerService by di<BrokerService>()
+    private var hostText: TextField by singleAssign()
+    private var hostPort: TextField by singleAssign()
+
+    override val root = borderpane {
+        center {
+            form {
+                fieldset {
+                    field("Host") {
+                        hostText = textfield()
+                    }
+                    field("Port") {
+                        hostPort = textfield()
+                    }
+                }
+            }
+        }
+        bottom {
+            hbox {
+                alignment = Pos.CENTER
+                button("Login") {
+                    action {
+                        val broker = tryConnect()
+                        if (broker != null) {
+                            TopicsView(broker).openWindow()
+                            close()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun tryConnect(): Broker? {
+        return try {
+            val host: String = hostText.text
+            val port: String = hostPort.text
+            brokerService.connect(host, port.toInt())
+        } catch (ex: ApplicationException) {
+            // todo error view
+            null
         }
     }
 }
