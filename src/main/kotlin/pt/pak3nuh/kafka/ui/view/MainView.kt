@@ -34,7 +34,6 @@ class MainView : View("Login") {
                         val broker = tryConnect()
                         if (broker != null) {
                             TopicsFragment(broker).openWindow()
-                            close()
                         }
                     }
                 }

@@ -1,7 +1,5 @@
 package pt.pak3nuh.kafka.ui.view
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import pt.pak3nuh.kafka.ui.controller.TopicsController
 import pt.pak3nuh.kafka.ui.service.Broker
 import tornadofx.*
@@ -12,15 +10,10 @@ class TopicsFragment(broker: Broker) : Fragment() {
 
     override val root = borderpane {
         top = hbox {
-            val list = listmenu()
-            controller.fillTopics(list)
+            label("Topic list")
+            val list = combobox<String>()
+            controller.updateTopics(list.items)
+            button("Refresh"){ action { controller.updateTopics(list.items) } }
         }
     }
-}
-
-fun <T> asd(data: suspend () -> T, paint: (T) -> Unit) {
-
-    val async = GlobalScope.async { data() }
-
-
 }
