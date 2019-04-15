@@ -2,10 +2,12 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.geometry.Pos
 import javafx.scene.control.TextField
+import javafx.scene.control.TextFormatter
 import pt.pak3nuh.kafka.ui.app.ApplicationException
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.BrokerService
 import tornadofx.*
+import java.util.function.UnaryOperator
 
 class MainView : View("Login") {
 
@@ -19,9 +21,18 @@ class MainView : View("Login") {
                 fieldset {
                     field("Host") {
                         hostText = textfield()
+                        hostText.text = "localhost"
                     }
                     field("Port") {
                         hostPort = textfield()
+                        hostPort.textFormatter = TextFormatter<String>(UnaryOperator { change ->
+                            if (change.text.matches("[0-9]*".toRegex())) {
+                                change
+                            } else {
+                                null
+                            }
+                        })
+                        hostPort.text = "32181"
                     }
                 }
             }

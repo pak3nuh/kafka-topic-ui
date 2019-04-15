@@ -6,6 +6,8 @@ import kotlinx.coroutines.launch
 import pt.pak3nuh.kafka.ui.service.Broker
 import tornadofx.*
 
+const val NO_TOPICS = "No Topics"
+
 class TopicsController : Controller() {
 
     private val broker: Broker by params
@@ -18,7 +20,7 @@ class TopicsController : Controller() {
             topics.forEach { list.add(it.name) }
 
             if(list.isEmpty()) {
-                list.add("No topics")
+                list.add(NO_TOPICS)
             }
         }
     }
