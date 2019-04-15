@@ -1,29 +1,31 @@
 package pt.pak3nuh.kafka.ui.controller
 
 import javafx.collections.ObservableList
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import pt.pak3nuh.kafka.ui.service.Broker
+import pt.pak3nuh.kafka.ui.service.Topic
 import tornadofx.*
 
-const val NO_TOPICS = "No Topics"
+val NO_TOPICS = Topic("No Topics")
 
 class TopicsController : Controller() {
 
     private val broker: Broker by params
 
-    fun updateTopics(list:ObservableList<String>) {
-        GlobalScope.launch {
-            val topics = broker.listTopics()
+    suspend fun updateTopics(list: ObservableList<Topic>) {
+        val topics = broker.listTopics()
 
-            list.clear()
-            topics.forEach { list.add(it.name) }
+        list.clear()
+        topics.forEach { list.add(it) }
 
-            if(list.isEmpty()) {
-                list.add(NO_TOPICS)
-            }
+        if (list.isEmpty()) {
+            list.add(NO_TOPICS)
         }
     }
 
+
+    companion object {
+        fun inject(parent: Component, broker: Broker) =
+                parent.inject<TopicsController>(parent.scope, "broker" to broker)
+    }
 
 }
