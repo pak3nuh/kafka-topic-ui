@@ -7,11 +7,16 @@ import pt.pak3nuh.kafka.ui.app.wrapEx
 @Service
 class BrokerService {
 
-    fun connect(host: String, port: Int): Broker {
+    fun connect(
+            host: String,
+            port: Int,
+            timeoutMs: Int = 5_000
+    ): Broker {
         return wrapEx {
             val adminClient = AdminClient.create(mapOf(
                     "bootstrap.servers" to "$host:$port",
-                    "group.id" to "test"
+                    "group.id" to "test",
+                    "request.timeout.ms" to timeoutMs
             ))
             Broker(host, port, adminClient)
         }

@@ -17,7 +17,7 @@ services:
     extra_hosts:
       - "moby:127.0.0.1"
 
-  broker1.test.farfetch.net:
+  broker1:
     image: confluentinc/cp-kafka:latest
     restart: on-failure:3
     ports:
@@ -27,7 +27,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1.test.farfetch.net:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:9092
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO,kafka.controller=INFO"
       KAFKA_LOG4J_ROOT_LOGLEVEL: DEBUG
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
