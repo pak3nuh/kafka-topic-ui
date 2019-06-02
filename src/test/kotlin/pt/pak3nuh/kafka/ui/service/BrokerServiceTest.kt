@@ -1,11 +1,6 @@
 package pt.pak3nuh.kafka.ui.service
 
-import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
 
 class BrokerServiceTest {
 
@@ -18,23 +13,6 @@ class BrokerServiceTest {
             broker.listTopics()
         }
         val sequence = future.get()
+        sequence.count()
     }
-}
-
-private fun <T> future(
-        context: CoroutineContext = Dispatchers.Default,
-        block: suspend () -> T
-): CompletableFuture<T> {
-    val future = CompletableFuture<T>()
-    block.startCoroutine(object: Continuation<T> {
-        override val context: CoroutineContext = context
-
-        override fun resumeWith(result: Result<T>) {
-            when {
-                result.isFailure -> future.completeExceptionally(result.exceptionOrNull())
-                result.isSuccess -> future.complete(result.getOrNull())
-            }
-        }
-    })
-    return future
 }

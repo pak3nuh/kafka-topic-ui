@@ -6,7 +6,7 @@ import pt.pak3nuh.kafka.ui.controller.NO_TOPICS
 import pt.pak3nuh.kafka.ui.controller.TopicsController
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.Topic
-import pt.pak3nuh.kafka.ui.view.coroutine.launch
+import pt.pak3nuh.kafka.ui.view.coroutine.launchFx
 import tornadofx.*
 
 class TopicsFragment(broker: Broker) : Fragment() {
@@ -20,7 +20,7 @@ class TopicsFragment(broker: Broker) : Fragment() {
             label("Topic list")
             button("Refresh") {
                 action {
-                    launch(this) {
+                    launchFx(this) {
                         controller.updateTopics(topics)
                     }
                 }

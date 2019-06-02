@@ -9,8 +9,11 @@ class TopicDetailFragment : Fragment("Topic Detail") {
     private val topic by param<Topic>()
     private val broker by param<Broker>()
 
-    override val root = borderpane {
 
+    override val root = borderpane {
+        top {
+
+        }
     }
 
 

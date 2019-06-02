@@ -3,11 +3,15 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.geometry.Pos
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
-import pt.pak3nuh.kafka.ui.app.ApplicationException
+import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.BrokerService
+import pt.pak3nuh.kafka.ui.view.coroutine.launchFx
+import pt.pak3nuh.kafka.ui.view.coroutine.continueOnMain
 import tornadofx.*
 import java.util.function.UnaryOperator
+
+private val logger = getSlfLogger<MainView>()
 
 class MainView : View("Login") {
 
@@ -21,7 +25,7 @@ class MainView : View("Login") {
                 fieldset {
                     field("Host") {
                         hostText = textfield()
-                        hostText.text = "localhost"
+                        hostText.text = "192.168.99.100"
                     }
                     field("Port") {
                         hostPort = textfield()
@@ -32,7 +36,7 @@ class MainView : View("Login") {
                                 null
                             }
                         })
-                        hostPort.text = "32181"
+                        hostPort.text = "9092"
                     }
                 }
             }
@@ -42,9 +46,13 @@ class MainView : View("Login") {
                 alignment = Pos.CENTER
                 button("Login") {
                     action {
-                        val broker = tryConnect()
-                        if (broker != null) {
-                            TopicsFragment(broker).openWindow()
+                        launchFx(this) {
+                            val broker = tryConnect()
+                            if (broker != null) {
+                                continueOnMain {
+                                    TopicsFragment(broker).openWindow()
+                                }
+                            }
                         }
                     }
                 }
@@ -52,14 +60,12 @@ class MainView : View("Login") {
         }
     }
 
-    private fun tryConnect(): Broker? {
-        return try {
-            val host: String = hostText.text
-            val port: String = hostPort.text
-            brokerService.connect(host, port.toInt())
-        } catch (ex: ApplicationException) {
-            // todo error view
-            null
-        }
+    private suspend fun tryConnect(): Broker? {
+        val host: String = hostText.text
+        val port: String = hostPort.text
+        logger.info("Connecting to $host:$port")
+        val broker = brokerService.connect(host, port.toInt())
+        return if(broker.isAvailable()) broker else null
+        // todo error view here
     }
 }
