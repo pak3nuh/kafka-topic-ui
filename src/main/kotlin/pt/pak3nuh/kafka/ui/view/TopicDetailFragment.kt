@@ -20,8 +20,8 @@ class TopicDetailFragment : Fragment("Topic Detail") {
     companion object {
         fun find(parent: Component, broker: Broker, topic: Topic) =
                 parent.find<TopicDetailFragment>(
-                        "broker" to broker,
-                        "topic" to topic
+                        TopicDetailFragment::broker to broker,
+                        TopicDetailFragment::topic to topic
                 )
     }
 }

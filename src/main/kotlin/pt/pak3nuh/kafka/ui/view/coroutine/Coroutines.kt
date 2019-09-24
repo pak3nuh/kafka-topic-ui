@@ -1,23 +1,25 @@
 package pt.pak3nuh.kafka.ui.view.coroutine
 
 import javafx.scene.Node
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 
 private val logger = getSlfLogger("pt.pak3nuh.kafka.ui.view.coroutine.CoroutinesKt")
 
-fun launchFx(
+fun <T> fxLaunch(
         vararg disableNodes: Node,
-        action: suspend () -> Unit
-) {
-    GlobalScope.launch {
+        bgAction: suspend () -> T
+): Job {
+    val scope = CoroutineScope(Dispatchers.Default)
+    return scope.launch {
         try {
             logger.debug("Disabling nodes and executing action")
             setEnable(disableNodes, true)
-            action()
+            val value = bgAction()
         } finally {
             logger.debug("Reenabling the nodes")
             setEnable(disableNodes, false)
@@ -25,7 +27,7 @@ fun launchFx(
     }
 }
 
-suspend fun continueOnMain(action: () -> Unit) {
+suspend fun continueOnMain(action: suspend () -> Unit) {
     withContext(Dispatchers.Main) {
         action()
     }

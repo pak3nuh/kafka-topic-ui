@@ -6,14 +6,14 @@ import javafx.scene.control.TextFormatter
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.BrokerService
-import pt.pak3nuh.kafka.ui.view.coroutine.launchFx
 import pt.pak3nuh.kafka.ui.view.coroutine.continueOnMain
+import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import tornadofx.*
 import java.util.function.UnaryOperator
 
-private val logger = getSlfLogger<MainView>()
+private val logger = getSlfLogger<LoginView>()
 
-class MainView : View("Login") {
+class LoginView : View("Login") {
 
     private val brokerService by di<BrokerService>()
     private var hostText: TextField by singleAssign()
@@ -25,7 +25,7 @@ class MainView : View("Login") {
                 fieldset {
                     field("Host") {
                         hostText = textfield()
-                        hostText.text = "192.168.99.100"
+                        hostText.text = "127.0.0.1"
                     }
                     field("Port") {
                         hostPort = textfield()
@@ -46,11 +46,11 @@ class MainView : View("Login") {
                 alignment = Pos.CENTER
                 button("Login") {
                     action {
-                        launchFx(this) {
+                        fxLaunch(this) {
                             val broker = tryConnect()
                             if (broker != null) {
                                 continueOnMain {
-                                    TopicsFragment(broker).openWindow()
+                                    this@LoginView.replaceWith(TopicsView.find(this@LoginView, broker))
                                 }
                             }
                         }
@@ -65,7 +65,13 @@ class MainView : View("Login") {
         val port: String = hostPort.text
         logger.info("Connecting to $host:$port")
         val broker = brokerService.connect(host, port.toInt())
-        return if(broker.isAvailable()) broker else null
-        // todo error view here
+        return if (broker.isAvailable())
+            broker
+        else {
+            continueOnMain {
+                ErrorView.find(this, "Cannot connect to broker").openModal()
+            }
+            null
+        }
     }
 }

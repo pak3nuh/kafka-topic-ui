@@ -1,11 +1,11 @@
 package pt.pak3nuh.kafka.ui.app
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
-import pt.pak3nuh.kafka.ui.view.MainView
+import pt.pak3nuh.kafka.ui.view.LoginView
 import tornadofx.*
 import kotlin.reflect.KClass
 
-class MyApp: App(MainView::class, Styles::class)
+class MyApp : App(LoginView::class, Styles::class)
 
 fun main(args: Array<String>) {
     FX.dicontainer = SpringContainer()
