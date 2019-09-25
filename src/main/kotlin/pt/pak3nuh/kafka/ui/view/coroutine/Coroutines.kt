@@ -10,16 +10,16 @@ import pt.pak3nuh.kafka.ui.log.getSlfLogger
 
 private val logger = getSlfLogger("pt.pak3nuh.kafka.ui.view.coroutine.CoroutinesKt")
 
-fun <T> fxLaunch(
+fun fxLaunch(
         vararg disableNodes: Node,
-        bgAction: suspend () -> T
+        bgAction: suspend () -> Unit
 ): Job {
     val scope = CoroutineScope(Dispatchers.Default)
     return scope.launch {
         try {
             logger.debug("Disabling nodes and executing action")
             setEnable(disableNodes, true)
-            val value = bgAction()
+            bgAction()
         } finally {
             logger.debug("Reenabling the nodes")
             setEnable(disableNodes, false)
@@ -27,15 +27,15 @@ fun <T> fxLaunch(
     }
 }
 
-suspend fun continueOnMain(action: suspend () -> Unit) {
+suspend fun onMain(fgAction: suspend () -> Unit) {
     withContext(Dispatchers.Main) {
-        action()
+        fgAction()
     }
 }
 
 
 private suspend fun setEnable(nodes: Array<out Node>, disabled: Boolean) {
-    continueOnMain {
+    onMain {
         nodes.forEach {
             it.isDisable = disabled
         }

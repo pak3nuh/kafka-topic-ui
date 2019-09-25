@@ -3,11 +3,12 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.geometry.Pos
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
+import pt.pak3nuh.kafka.ui.controller.TopicsController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.BrokerService
-import pt.pak3nuh.kafka.ui.view.coroutine.continueOnMain
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
+import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
 import java.util.function.UnaryOperator
 
@@ -49,8 +50,14 @@ class LoginView : View("Login") {
                         fxLaunch(this) {
                             val broker = tryConnect()
                             if (broker != null) {
-                                continueOnMain {
-                                    this@LoginView.replaceWith(TopicsView.find(this@LoginView, broker))
+                                onMain {
+                                    val controller = TopicsController.find(this@LoginView, broker)
+                                    val topicView = TopicsView.find(this@LoginView, controller)
+                                    topicView.currentWindow?.apply {
+                                        width = 500.0
+                                        height = 500.0
+                                    }
+                                    this@LoginView.replaceWith(topicView)
                                 }
                             }
                         }
@@ -68,7 +75,7 @@ class LoginView : View("Login") {
         return if (broker.isAvailable())
             broker
         else {
-            continueOnMain {
+            onMain {
                 ErrorView.find(this, "Cannot connect to broker").openModal()
             }
             null

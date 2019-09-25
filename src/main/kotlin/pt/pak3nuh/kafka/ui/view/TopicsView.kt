@@ -3,60 +3,146 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
 import pt.pak3nuh.kafka.ui.controller.TopicsController
-import pt.pak3nuh.kafka.ui.service.Broker
+import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Topic
-import pt.pak3nuh.kafka.ui.view.coroutine.continueOnMain
+import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
+import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
 
-private val NO_TOPICS = Topic("No Topics")
+private val logger = getSlfLogger<TopicsView>()
 
 class TopicsView : View() {
 
-    private val broker by param<Broker>()
-    private val controller by TopicsController.inject(this, broker)
-    private var topicList by singleAssign<ListView<Topic>>()
+    private var topicFilter: (String) -> Boolean = { true }
+    private var topicList: List<Topic> = listOf()
+    private var keyDeserializer: DeserializerMetadata? = null
+    private var valueDeserializer: DeserializerMetadata? = null
+
+    private val controller by param<TopicsController>()
+    private val observableTopics = observableList<Topic>()
+    private val topicListView: ListView<Topic> = listview(observableTopics)
+    private val previewList = observableList<String>()
 
     override val root = borderpane {
-        val topics = observableList<Topic>()
+
+        title = "Topic list for broker ${controller.host}"
+
         top = hbox {
-            label("Topic list")
-            button("Refresh") {
+            button("Load Topics") {
                 action {
                     fxLaunch(this) {
-                        val controllerTopics = controller.getTopics()
-                        continueOnMain {
-                            topics.clear()
-                            topics.addAll(controllerTopics)
-
-                            if (topics.isEmpty()) {
-                                topics.add(NO_TOPICS)
-                            }
+                        topicList = controller.getTopics().toList()
+                        onMain {
+                            filterTopics()
                         }
+                    }
+                }
+            }
+
+            button("Open Topic") {
+                action {
+                    val selectedItem: Topic? = topicListView.selectionModel.selectedItem
+                    if (selectedItem != null) {
+                        //todo detail
                     }
                 }
             }
         }
         center = hbox {
-            topicList = listview(topics)
-            topicList.selectionModel.selectionMode = SelectionMode.SINGLE
-            topicList.items.add(NO_TOPICS)
-        }
-        bottom = hbox {
-            button("Open Topic") {
-                action {
-                    val selectedItem: Topic? = topicList.selectionModel.selectedItem
-                    if (selectedItem != null) {
-                        TopicDetailFragment.find(this@TopicsView, broker, selectedItem).openWindow()
+
+            // topic list
+            vbox {
+                val filterField = textfield()
+                filterField.promptText = "Filter topics"
+                filterField.textProperty().addListener { _, _, newValue ->
+                    topicFilter = { it.contains(newValue) }
+                    filterTopics()
+                }
+                topicListView.attachTo(this)
+                topicListView.selectionModel.selectionMode = SelectionMode.SINGLE
+                topicListView.selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
+                    logger.debug("Changed selected topic to {}", newValue)
+                    loadPreview(newValue)
+                }
+            }
+
+            // preview
+            vbox {
+                // serde
+                vbox {
+                    fieldset {
+                        val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
+                        keyDeserializer = deserializerList[0].metadata
+                        valueDeserializer = deserializerList[0].metadata
+
+                        label("Key Deserializer")
+                        combobox(values = deserializerList) {
+                            selectionModel.select(0)
+                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                keyDeserializer = newValue?.metadata
+                                logger.debug("Changed key deserializer to {}", keyDeserializer?.name)
+                            }
+                        }
+
+                        label("Value Deserializer")
+                        combobox(values = deserializerList) {
+                            selectionModel.select(0)
+                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                valueDeserializer = newValue?.metadata
+                                logger.debug("Changed value deserializer to {}", valueDeserializer?.name)
+                            }
+                        }
                     }
+                }
+
+                // top 5 messages
+                vbox {
+                    label("Topic key preview")
+                    listview(previewList)
+                }
+
+                // value preview
+                vbox {
+                    label("Topic value preview")
+                    textarea()
                 }
             }
         }
+
+    }
+
+    private fun loadPreview(newTopic: Topic) {
+        if (keyDeserializer == null) {
+            return
+        }
+        fxLaunch(topicListView) {
+            val records = controller
+                    .previewKeys(newTopic, keyDeserializer!!)
+
+            onMain {
+                previewList.clear()
+                previewList.addAll(records)
+            }
+
+        }
+    }
+
+
+    private fun filterTopics() {
+        observableTopics.clear()
+        observableTopics.addAll(topicList.filter { topicFilter(it.name) })
     }
 
     companion object {
-        fun find(parent: Component, broker: Broker) = parent.find<TopicsView>(
-                TopicsView::broker to broker
+        fun find(parent: Component, controller: TopicsController) = parent.find<TopicsView>(
+                TopicsView::controller to controller
         )
     }
+}
+
+private class ComboDeserializerItem(
+        val metadata: DeserializerMetadata
+) {
+    override fun toString(): String = metadata.name
 }
