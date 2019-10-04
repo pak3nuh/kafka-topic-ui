@@ -1,7 +1,6 @@
 package pt.pak3nuh.kafka.ui.view.coroutine
 
 import javafx.scene.Node
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -10,12 +9,11 @@ import pt.pak3nuh.kafka.ui.log.getSlfLogger
 
 private val logger = getSlfLogger("pt.pak3nuh.kafka.ui.view.coroutine.CoroutinesKt")
 
-fun fxLaunch(
-        vararg disableNodes: Node,
-        bgAction: suspend () -> Unit
+fun ScopedView.fxLaunch(
+    vararg disableNodes: Node,
+    bgAction: suspend () -> Unit
 ): Job {
-    val scope = CoroutineScope(Dispatchers.Default)
-    return scope.launch {
+    return launch {
         try {
             logger.debug("Disabling nodes and executing action")
             setEnable(disableNodes, true)

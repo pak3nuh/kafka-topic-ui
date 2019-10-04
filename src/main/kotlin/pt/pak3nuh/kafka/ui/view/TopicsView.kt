@@ -6,13 +6,14 @@ import pt.pak3nuh.kafka.ui.controller.TopicsController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
+import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
 
 private val logger = getSlfLogger<TopicsView>()
 
-class TopicsView : View() {
+class TopicsView : ScopedView("Topics") {
 
     private var topicFilter: (String) -> Boolean = { true }
     private var topicList: List<Topic> = listOf()

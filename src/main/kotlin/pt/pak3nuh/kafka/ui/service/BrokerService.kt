@@ -58,7 +58,8 @@ class Broker(val host: String, val port: Int, private val adminClient: AdminClie
 
     suspend fun preview(topic: Topic, recordNumber: Int = 5): List<Record> {
         return withContext(KafkaDispatcher) {
-            consumer.subscribe(listOf(topic.name))
+            val topicName = topic.name
+            consumer.subscribe(listOf(topicName))
             val records = consumer.poll(Duration.ofSeconds(1))
             val result = records.map {
                 Pair(it.key().get(), it.value())

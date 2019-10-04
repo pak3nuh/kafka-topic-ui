@@ -7,6 +7,7 @@ import pt.pak3nuh.kafka.ui.controller.TopicsController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.Broker
 import pt.pak3nuh.kafka.ui.service.BrokerService
+import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
@@ -14,7 +15,7 @@ import java.util.function.UnaryOperator
 
 private val logger = getSlfLogger<LoginView>()
 
-class LoginView : View("Login") {
+class LoginView : ScopedView("Login") {
 
     private val brokerService by di<BrokerService>()
     private var hostText: TextField by singleAssign()
