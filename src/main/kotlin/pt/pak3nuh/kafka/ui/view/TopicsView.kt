@@ -19,11 +19,13 @@ class TopicsView : ScopedView("Topics") {
     private var topicList: List<Topic> = listOf()
     private var keyDeserializer: DeserializerMetadata? = null
     private var valueDeserializer: DeserializerMetadata? = null
+    private lateinit var selectedTopic: Topic
 
     private val controller by param<TopicsController>()
     private val observableTopics = observableList<Topic>()
     private val topicListView: ListView<Topic> = listview(observableTopics)
     private val previewList = observableList<String>()
+    private val previewRefreshButton = button("Refresh Preview")
 
     override val root = borderpane {
 
@@ -64,13 +66,14 @@ class TopicsView : ScopedView("Topics") {
                 topicListView.selectionModel.selectionMode = SelectionMode.SINGLE
                 topicListView.selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
                     logger.debug("Changed selected topic to {}", newValue)
-                    loadPreview(newValue)
+                    selectedTopic = newValue
+                    loadPreview()
                 }
             }
 
             // preview
             vbox {
-                // serde
+                // deserializers
                 vbox {
                     fieldset {
                         val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
@@ -94,8 +97,13 @@ class TopicsView : ScopedView("Topics") {
                                 logger.debug("Changed value deserializer to {}", valueDeserializer?.name)
                             }
                         }
+                        add(previewRefreshButton)
+                        previewRefreshButton.action {
+                            loadPreview(true)
+                        }
                     }
                 }
+
 
                 // top 5 messages
                 vbox {
@@ -113,13 +121,11 @@ class TopicsView : ScopedView("Topics") {
 
     }
 
-    private fun loadPreview(newTopic: Topic) {
-        if (keyDeserializer == null) {
-            return
-        }
-        fxLaunch(topicListView) {
+    private fun loadPreview(refresh: Boolean = false) {
+        val deserializer = keyDeserializer ?: return
+        fxLaunch(topicListView, previewRefreshButton) {
             val records = controller
-                    .previewKeys(newTopic, keyDeserializer!!)
+                .previewKeys(selectedTopic, deserializer, refresh)
 
             onMain {
                 previewList.clear()
@@ -137,13 +143,13 @@ class TopicsView : ScopedView("Topics") {
 
     companion object {
         fun find(parent: Component, controller: TopicsController) = parent.find<TopicsView>(
-                TopicsView::controller to controller
+            TopicsView::controller to controller
         )
     }
 }
 
 private class ComboDeserializerItem(
-        val metadata: DeserializerMetadata
+    val metadata: DeserializerMetadata
 ) {
     override fun toString(): String = metadata.name
 }

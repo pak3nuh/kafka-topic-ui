@@ -1,5 +1,6 @@
 package pt.pak3nuh.kafka.ui.service.consumer
 
+import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import java.util.Properties
@@ -17,3 +18,5 @@ fun createConsumerProperties(
     props[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = if (earliest) "earliest" else "latest"
     return props
 }
+
+typealias BytesConsumer = Consumer<ByteArray, ByteArray>

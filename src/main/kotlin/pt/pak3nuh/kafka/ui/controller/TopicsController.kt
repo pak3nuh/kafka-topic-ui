@@ -19,8 +19,8 @@ class TopicsController : Controller() {
 
     val host: String = "${broker.host}:${broker.port}"
 
-    suspend fun previewKeys(newTopic: Topic, metadata: DeserializerMetadata): List<String> {
-        val records = broker.preview(newTopic)
+    suspend fun previewKeys(newTopic: Topic, metadata: DeserializerMetadata, refresh: Boolean): List<String> {
+        val records = broker.preview(newTopic, refresh)
         val deserializer = deserializerService.createDeserializer(metadata)
         return records.map {
             if (it.first == null) "null" else deserializer.deserialize(it.first!!)

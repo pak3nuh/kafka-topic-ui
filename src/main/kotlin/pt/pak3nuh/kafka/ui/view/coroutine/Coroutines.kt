@@ -16,23 +16,23 @@ fun ScopedView.fxLaunch(
     return launch {
         try {
             logger.debug("Disabling nodes and executing action")
-            setEnable(disableNodes, true)
+            setDisable(disableNodes, true)
             bgAction()
         } finally {
             logger.debug("Reenabling the nodes")
-            setEnable(disableNodes, false)
+            setDisable(disableNodes, false)
         }
     }
 }
 
-suspend fun onMain(fgAction: suspend () -> Unit) {
+suspend inline fun onMain(crossinline fgAction: suspend () -> Unit) {
     withContext(Dispatchers.Main) {
         fgAction()
     }
 }
 
 
-private suspend fun setEnable(nodes: Array<out Node>, disabled: Boolean) {
+private suspend fun setDisable(nodes: Array<out Node>, disabled: Boolean) {
     onMain {
         nodes.forEach {
             it.isDisable = disabled
