@@ -1,12 +1,20 @@
 package pt.pak3nuh.kafka.ui.service
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.apache.kafka.common.KafkaFuture
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.startCoroutine
 
 suspend fun <T> KafkaFuture<T>.await(): T {
-    return suspendCoroutine { continuation ->
+    return suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation {
+            this.cancel(true)
+        }
         whenComplete { value, err ->
             if (err != null) {
                 continuation.resumeWithException(err)
