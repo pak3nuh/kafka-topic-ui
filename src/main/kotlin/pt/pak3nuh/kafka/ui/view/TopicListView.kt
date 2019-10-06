@@ -13,12 +13,11 @@ import tornadofx.*
 
 private val logger = getSlfLogger<TopicsView>()
 
-class TopicsView : ScopedView("Topics") {
+class TopicsView private constructor() : ScopedView("Topics") {
 
     private var topicFilter: (String) -> Boolean = { true }
     private var topicList: List<Topic> = listOf()
     private var keyDeserializer: DeserializerMetadata? = null
-    private var valueDeserializer: DeserializerMetadata? = null
     private lateinit var selectedTopic: Topic
 
     private val controller by param<TopicsController>()
@@ -56,12 +55,14 @@ class TopicsView : ScopedView("Topics") {
 
             // topic list
             vbox {
-                val filterField = textfield()
-                filterField.promptText = "Filter topics"
-                filterField.textProperty().addListener { _, _, newValue ->
-                    topicFilter = { it.contains(newValue) }
-                    filterTopics()
+                textfield {
+                    promptText = "Filter topics"
+                    textProperty().addListener { _, _, newValue ->
+                        topicFilter = { it.contains(newValue) }
+                        filterTopics()
+                    }
                 }
+
                 topicListView.attachTo(this)
                 topicListView.selectionModel.selectionMode = SelectionMode.SINGLE
                 topicListView.selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
@@ -78,7 +79,6 @@ class TopicsView : ScopedView("Topics") {
                     fieldset {
                         val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
                         keyDeserializer = deserializerList[0].metadata
-                        valueDeserializer = deserializerList[0].metadata
 
                         label("Key Deserializer")
                         combobox(values = deserializerList) {
@@ -86,15 +86,7 @@ class TopicsView : ScopedView("Topics") {
                             selectionModel.selectedItemProperty().addListener { _, _, newValue ->
                                 keyDeserializer = newValue?.metadata
                                 logger.debug("Changed key deserializer to {}", keyDeserializer?.name)
-                            }
-                        }
-
-                        label("Value Deserializer")
-                        combobox(values = deserializerList) {
-                            selectionModel.select(0)
-                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                valueDeserializer = newValue?.metadata
-                                logger.debug("Changed value deserializer to {}", valueDeserializer?.name)
+                                loadPreview()
                             }
                         }
                         add(previewRefreshButton)
@@ -109,12 +101,6 @@ class TopicsView : ScopedView("Topics") {
                 vbox {
                     label("Topic key preview")
                     listview(previewList)
-                }
-
-                // value preview
-                vbox {
-                    label("Topic value preview")
-                    textarea()
                 }
             }
         }
