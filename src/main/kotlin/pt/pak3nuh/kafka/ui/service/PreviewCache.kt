@@ -2,6 +2,7 @@ package pt.pak3nuh.kafka.ui.service
 
 import kotlinx.coroutines.withContext
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
+import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.consumer.BytesConsumer
 import pt.pak3nuh.kafka.ui.view.coroutine.KafkaDispatcher
 import java.time.Duration

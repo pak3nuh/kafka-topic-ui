@@ -3,10 +3,10 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.geometry.Pos
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
-import pt.pak3nuh.kafka.ui.controller.TopicsController
+import pt.pak3nuh.kafka.ui.controller.LoginController
+import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
-import pt.pak3nuh.kafka.ui.service.Broker
-import pt.pak3nuh.kafka.ui.service.BrokerService
+import pt.pak3nuh.kafka.ui.service.broker.Broker
 import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
@@ -17,7 +17,7 @@ private val logger = getSlfLogger<LoginView>()
 
 class LoginView : ScopedView("Login") {
 
-    private val brokerService by di<BrokerService>()
+    private val controller: LoginController by inject()
     private var hostText: TextField by singleAssign()
     private var hostPort: TextField by singleAssign()
 
@@ -50,15 +50,17 @@ class LoginView : ScopedView("Login") {
                     action {
                         fxLaunch(this) {
                             val broker = tryConnect()
-                            if (broker != null) {
-                                onMain {
-                                    val controller = TopicsController.find(this@LoginView, broker)
-                                    val topicView = TopicsView.find(this@LoginView, controller)
+                            onMain {
+                                if (broker != null) {
+                                    val controller = TopicListController.find(this@LoginView, broker)
+                                    val topicView = TopicListView.find(this@LoginView, controller)
                                     topicView.currentWindow?.apply {
                                         width = 500.0
                                         height = 500.0
                                     }
                                     this@LoginView.replaceWith(topicView)
+                                } else {
+                                    ErrorView.find(this@LoginView, "Cannot connect to broker").openModal()
                                 }
                             }
                         }
@@ -72,14 +74,6 @@ class LoginView : ScopedView("Login") {
         val host: String = hostText.text
         val port: String = hostPort.text
         logger.info("Connecting to $host:$port")
-        val broker = brokerService.connect(host, port.toInt())
-        return if (broker.isAvailable())
-            broker
-        else {
-            onMain {
-                ErrorView.find(this, "Cannot connect to broker").openModal()
-            }
-            null
-        }
+        return controller.getBroker(host, port)
     }
 }

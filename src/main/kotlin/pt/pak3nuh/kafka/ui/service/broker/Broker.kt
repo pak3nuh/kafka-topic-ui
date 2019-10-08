@@ -1,33 +1,13 @@
-package pt.pak3nuh.kafka.ui.service
+package pt.pak3nuh.kafka.ui.service.broker
 
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.KafkaException
-import org.springframework.stereotype.Service
-import pt.pak3nuh.kafka.ui.app.wrapEx
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
+import pt.pak3nuh.kafka.ui.service.PreviewCache
+import pt.pak3nuh.kafka.ui.service.await
 import pt.pak3nuh.kafka.ui.service.consumer.createConsumerProperties
 import kotlin.math.roundToInt
-
-@Service
-class BrokerService {
-
-    fun connect(
-        host: String,
-        port: Int,
-        timeoutMs: Int = 5_000
-    ): Broker {
-        return wrapEx {
-            val adminClient = AdminClient.create(mapOf(
-                "bootstrap.servers" to "$host:$port",
-                "group.id" to "kafka-topic-ui-app",
-                "request.timeout.ms" to timeoutMs
-            ))
-            Broker(host, port, adminClient)
-        }
-    }
-
-}
 
 private val logger = getSlfLogger<Broker>()
 
@@ -61,12 +41,6 @@ class Broker(val host: String, val port: Int, private val adminClient: AdminClie
         adminClient.close()
         consumer.close()
         cache.clear()
-    }
-}
-
-class Topic(val name: String) {
-    override fun toString(): String {
-        return name
     }
 }
 

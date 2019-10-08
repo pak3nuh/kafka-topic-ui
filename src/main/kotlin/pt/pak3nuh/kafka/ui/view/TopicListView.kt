@@ -2,25 +2,26 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
-import pt.pak3nuh.kafka.ui.controller.TopicsController
+import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
-import pt.pak3nuh.kafka.ui.service.Topic
+import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
 
-private val logger = getSlfLogger<TopicsView>()
+private val logger = getSlfLogger<TopicListView>()
 
-class TopicsView private constructor() : ScopedView("Topics") {
+class TopicListView : ScopedView("Topics") {
 
     private var topicFilter: (String) -> Boolean = { true }
     private var topicList: List<Topic> = listOf()
     private var keyDeserializer: DeserializerMetadata? = null
+    private var valueDeserializer: DeserializerMetadata? = null
     private lateinit var selectedTopic: Topic
 
-    private val controller by param<TopicsController>()
+    private val controller: TopicListController by di()
     private val observableTopics = observableList<Topic>()
     private val topicListView: ListView<Topic> = listview(observableTopics)
     private val previewList = observableList<String>()
@@ -75,25 +76,38 @@ class TopicsView private constructor() : ScopedView("Topics") {
             // preview
             vbox {
                 // deserializers
-                vbox {
-                    fieldset {
-                        val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
-                        keyDeserializer = deserializerList[0].metadata
-
-                        label("Key Deserializer")
-                        combobox(values = deserializerList) {
-                            selectionModel.select(0)
-                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                keyDeserializer = newValue?.metadata
-                                logger.debug("Changed key deserializer to {}", keyDeserializer?.name)
-                                loadPreview()
+                hbox {
+                    val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
+                    keyDeserializer = deserializerList[0].metadata
+                    vbox {
+                        fieldset {
+                            label("Key Deserializer")
+                            combobox(values = deserializerList) {
+                                selectionModel.select(0)
+                                selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                    keyDeserializer = newValue?.metadata
+                                    logger.debug("Changed key deserializer to {}", newValue?.metadata?.name)
+                                    loadPreview()
+                                }
                             }
                         }
-                        add(previewRefreshButton)
-                        previewRefreshButton.action {
-                            loadPreview(true)
+                    }
+                    vbox {
+                        fieldset {
+                            label("Value Deserializer")
+                            combobox(values = deserializerList) {
+                                selectionModel.select(0)
+                                selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                    valueDeserializer = newValue?.metadata
+                                    logger.debug("Changed value deserializer to {}", newValue?.metadata?.name)
+                                }
+                            }
                         }
                     }
+                }
+                add(previewRefreshButton)
+                previewRefreshButton.action {
+                    loadPreview(true)
                 }
 
 
@@ -128,8 +142,8 @@ class TopicsView private constructor() : ScopedView("Topics") {
     }
 
     companion object {
-        fun find(parent: Component, controller: TopicsController) = parent.find<TopicsView>(
-            TopicsView::controller to controller
+        fun find(parent: Component, controller: TopicListController) = parent.find<TopicListView>(
+            TopicListView::controller to controller
         )
     }
 }

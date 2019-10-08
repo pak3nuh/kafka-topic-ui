@@ -1,12 +1,12 @@
 package pt.pak3nuh.kafka.ui.controller
 
-import pt.pak3nuh.kafka.ui.service.Broker
-import pt.pak3nuh.kafka.ui.service.Topic
+import pt.pak3nuh.kafka.ui.service.broker.Broker
+import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerProviderService
 import tornadofx.*
 
-class TopicsController : Controller() {
+class TopicListController : Controller() {
 
     private val broker by param<Broker>()
     private val deserializerService by di<DeserializerProviderService>()
@@ -29,7 +29,7 @@ class TopicsController : Controller() {
 
     companion object {
         fun find(parent: Component, broker: Broker) =
-                parent.find<TopicsController>(TopicsController::broker.name to broker)
+                parent.find<TopicListController>(TopicListController::broker.name to broker)
     }
 
 }
