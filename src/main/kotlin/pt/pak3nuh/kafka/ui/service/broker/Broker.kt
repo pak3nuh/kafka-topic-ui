@@ -19,7 +19,7 @@ class Broker(val host: String, val port: Int, private val adminClient: AdminClie
     private val cache = PreviewCache(consumer)
 
     suspend fun listTopics(): Sequence<Topic> {
-        return adminClient.listTopics().names().await().map(::Topic).asSequence()
+        return adminClient.listTopics().names().await().asSequence().map(::Topic)
     }
 
     suspend fun isAvailable(): Boolean {

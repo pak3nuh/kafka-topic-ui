@@ -8,7 +8,11 @@ import pt.pak3nuh.kafka.ui.service.broker.Broker
 class DiBeanRegister(private val context: GenericApplicationContext) {
 
     fun registerBroker(broker: Broker) {
-        context.registerBean(Broker::class.qualifiedName, Broker::class.java, { broker }, emptyArray())
+        val beanName = Broker::class.qualifiedName!!
+        if (context.containsBean(beanName)) {
+            context.removeBeanDefinition(beanName)
+        }
+        context.registerBean(beanName, Broker::class.java, { broker }, emptyArray())
     }
 
 }

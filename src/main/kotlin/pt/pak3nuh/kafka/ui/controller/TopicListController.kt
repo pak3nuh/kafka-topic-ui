@@ -8,7 +8,7 @@ import tornadofx.*
 
 class TopicListController : Controller() {
 
-    private val broker by param<Broker>()
+    private val broker by di<Broker>()
     private val deserializerService by di<DeserializerProviderService>()
 
     suspend fun getTopics(): Sequence<Topic> {
@@ -25,11 +25,6 @@ class TopicListController : Controller() {
         return records.map {
             if (it.first == null) "null" else deserializer.deserialize(it.first!!)
         }
-    }
-
-    companion object {
-        fun find(parent: Component, broker: Broker) =
-                parent.find<TopicListController>(TopicListController::broker.name to broker)
     }
 
 }

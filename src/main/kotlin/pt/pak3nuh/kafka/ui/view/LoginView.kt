@@ -1,5 +1,6 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
@@ -18,27 +19,31 @@ private val logger = getSlfLogger<LoginView>()
 class LoginView : ScopedView("Login") {
 
     private val controller: LoginController by inject()
-    private var hostText: TextField by singleAssign()
-    private var hostPort: TextField by singleAssign()
+    private val viewModel = ViewModel()
 
     override val root = borderpane {
         center {
             form {
                 fieldset {
                     field("Host") {
-                        hostText = textfield()
-                        hostText.text = "127.0.0.1"
+                        textfield {
+                            bind(viewModel.hostText)
+                            viewModel.hostText.value = "127.0.0.1"
+                        }
                     }
                     field("Port") {
-                        hostPort = textfield()
-                        hostPort.textFormatter = TextFormatter<String>(UnaryOperator { change ->
-                            if (change.text.matches("[0-9]*".toRegex())) {
-                                change
-                            } else {
-                                null
-                            }
-                        })
-                        hostPort.text = "9092"
+                        textfield {
+                            bind(viewModel.hostPort)
+                            viewModel.hostPort.value = "9092"
+                            textFormatter = TextFormatter<String>(UnaryOperator { change ->
+                                if (change.text.matches("[0-9]*".toRegex())) {
+                                    change
+                                } else {
+                                    null
+                                }
+                            })
+
+                        }
                     }
                 }
             }
@@ -52,8 +57,7 @@ class LoginView : ScopedView("Login") {
                             val broker = tryConnect()
                             onMain {
                                 if (broker != null) {
-                                    val controller = TopicListController.find(this@LoginView, broker)
-                                    val topicView = TopicListView.find(this@LoginView, controller)
+                                    val topicView = find<TopicListView>()
                                     topicView.currentWindow?.apply {
                                         width = 500.0
                                         height = 500.0
@@ -71,9 +75,14 @@ class LoginView : ScopedView("Login") {
     }
 
     private suspend fun tryConnect(): Broker? {
-        val host: String = hostText.text
-        val port: String = hostPort.text
+        val host: String = viewModel.hostText.value
+        val port: String = viewModel.hostPort.value
         logger.info("Connecting to $host:$port")
         return controller.getBroker(host, port)
+    }
+
+    private class ViewModel {
+        val hostText = SimpleStringProperty()
+        val hostPort = SimpleStringProperty()
     }
 }

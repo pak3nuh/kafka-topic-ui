@@ -13,143 +13,123 @@ import tornadofx.*
 
 private val logger = getSlfLogger<TopicListView>()
 
+// todo when close doesn't kill app after selected one topic
 class TopicListView : ScopedView("Topics") {
 
-    private var topicFilter: (String) -> Boolean = { true }
-    private var topicList: List<Topic> = listOf()
-    private var keyDeserializer: DeserializerMetadata? = null
-    private var valueDeserializer: DeserializerMetadata? = null
-    private lateinit var selectedTopic: Topic
+    // todo some of this state should be controller
+    private class ViewModel {
+        val observableTopics = observableList<Topic>()
+        val previewList = observableList<String>()
+        var topicFilter: (String) -> Boolean = { true }
+        var topicList: List<Topic> = listOf()
+        var keyDeserializer: DeserializerMetadata? = null
+        var valueDeserializer: DeserializerMetadata? = null
+        var selectedTopic: Topic? = null
+    }
 
-    private val controller: TopicListController by di()
-    private val observableTopics = observableList<Topic>()
-    private val topicListView: ListView<Topic> = listview(observableTopics)
-    private val previewList = observableList<String>()
-    private val previewRefreshButton = button("Refresh Preview")
+    private val viewModel = ViewModel()
+    private val controller: TopicListController by inject()
+    private val topicListView: ListView<Topic> = listview(viewModel.observableTopics)
 
     override val root = borderpane {
 
         title = "Topic list for broker ${controller.host}"
 
-        top = hbox {
-            button("Load Topics") {
-                action {
-                    fxLaunch(this) {
-                        topicList = controller.getTopics().toList()
-                        onMain {
+        center = vbox {
+
+            titledpane("Topics") {
+                topicListView.attachTo(this) {
+                    selectionModel.selectionMode = SelectionMode.SINGLE
+                    selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
+                        logger.debug("Changed selected topic to {}", newValue)
+                        viewModel.selectedTopic = newValue
+                        loadPreview()
+                    }
+                }
+
+                borderpane {
+                    center = textfield {
+                        promptText = "Filter here"
+                        textProperty().addListener { _, _, newValue ->
+                            viewModel.topicFilter = { it.contains(newValue) }
                             filterTopics()
                         }
+                        style {
+                            fitToWidth = true
+                        }
+                    }
+                    right = button("Refresh") {
+                        action {
+                            fxLaunch(this) {
+                                viewModel.topicList = controller.getTopics().toList()
+                                onMain {
+                                    filterTopics()
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            button("Open Topic") {
-                action {
-                    val selectedItem: Topic? = topicListView.selectionModel.selectedItem
-                    if (selectedItem != null) {
-                        //todo detail
-                    }
-                }
-            }
-        }
-        center = hbox {
-
-            // topic list
-            vbox {
-                textfield {
-                    promptText = "Filter topics"
-                    textProperty().addListener { _, _, newValue ->
-                        topicFilter = { it.contains(newValue) }
-                        filterTopics()
-                    }
-                }
-
-                topicListView.attachTo(this)
-                topicListView.selectionModel.selectionMode = SelectionMode.SINGLE
-                topicListView.selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
-                    logger.debug("Changed selected topic to {}", newValue)
-                    selectedTopic = newValue
-                    loadPreview()
-                }
+            titledpane("Preview") {
+                listview(viewModel.previewList)
             }
 
-            // preview
-            vbox {
-                // deserializers
+            titledpane("Deserializers") {
+                collapsibleProperty().value = true
+                val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
+                viewModel.keyDeserializer = deserializerList[0].metadata
                 hbox {
-                    val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
-                    keyDeserializer = deserializerList[0].metadata
-                    vbox {
-                        fieldset {
-                            label("Key Deserializer")
-                            combobox(values = deserializerList) {
-                                selectionModel.select(0)
-                                selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                    keyDeserializer = newValue?.metadata
-                                    logger.debug("Changed key deserializer to {}", newValue?.metadata?.name)
-                                    loadPreview()
-                                }
-                            }
+                    label("Key:")
+                    combobox(values = deserializerList) {
+                        selectionModel.select(0)
+                        selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                            viewModel.keyDeserializer = newValue?.metadata
+                            logger.debug("Changed key deserializer to {}", newValue?.metadata?.name)
+                            loadPreview()
                         }
                     }
-                    vbox {
-                        fieldset {
-                            label("Value Deserializer")
-                            combobox(values = deserializerList) {
-                                selectionModel.select(0)
-                                selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                                    valueDeserializer = newValue?.metadata
-                                    logger.debug("Changed value deserializer to {}", newValue?.metadata?.name)
-                                }
-                            }
+
+                    label("Value:")
+                    combobox(values = deserializerList) {
+                        selectionModel.select(0)
+                        selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                            viewModel.valueDeserializer = newValue?.metadata
+                            logger.debug("Changed value deserializer to {}", newValue?.metadata?.name)
                         }
                     }
-                }
-                add(previewRefreshButton)
-                previewRefreshButton.action {
-                    loadPreview(true)
-                }
-
-
-                // top 5 messages
-                vbox {
-                    label("Topic key preview")
-                    listview(previewList)
                 }
             }
+
         }
 
     }
 
     private fun loadPreview(refresh: Boolean = false) {
-        val deserializer = keyDeserializer ?: return
-        fxLaunch(topicListView, previewRefreshButton) {
+        val topic = viewModel.selectedTopic ?: return
+        val deserializer = viewModel.keyDeserializer ?: return
+        fxLaunch(topicListView) {
             val records = controller
-                .previewKeys(selectedTopic, deserializer, refresh)
+                    .previewKeys(topic, deserializer, refresh)
 
             onMain {
-                previewList.clear()
-                previewList.addAll(records)
+                viewModel.previewList.clear()
+                viewModel.previewList.addAll(records)
             }
 
         }
     }
 
-
     private fun filterTopics() {
-        observableTopics.clear()
-        observableTopics.addAll(topicList.filter { topicFilter(it.name) })
+        viewModel.observableTopics.clear()
+        viewModel.observableTopics.addAll(viewModel.topicList.filter { viewModel.topicFilter(it.name) })
     }
 
-    companion object {
-        fun find(parent: Component, controller: TopicListController) = parent.find<TopicListView>(
-            TopicListView::controller to controller
-        )
-    }
+
 }
 
 private class ComboDeserializerItem(
-    val metadata: DeserializerMetadata
+        val metadata: DeserializerMetadata
 ) {
     override fun toString(): String = metadata.name
 }
