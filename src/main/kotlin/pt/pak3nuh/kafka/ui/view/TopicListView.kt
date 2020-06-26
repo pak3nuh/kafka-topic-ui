@@ -1,5 +1,6 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.collections.transformation.FilteredList
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
 import pt.pak3nuh.kafka.ui.controller.TopicListController
@@ -10,6 +11,7 @@ import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
+import java.util.function.Predicate
 
 private val logger = getSlfLogger<TopicListView>()
 
@@ -18,10 +20,9 @@ class TopicListView : ScopedView("Topics") {
 
     // todo some of this state should be controller
     private class ViewModel {
-        val observableTopics = observableList<Topic>()
         val previewList = observableList<String>()
-        var topicFilter: (String) -> Boolean = { true }
-        var topicList: List<Topic> = listOf()
+        var topicList = observableList<Topic>()
+        val filteredList: FilteredList<Topic> = topicList.filtered { true }
         var keyDeserializer: DeserializerMetadata? = null
         var valueDeserializer: DeserializerMetadata? = null
         var selectedTopic: Topic? = null
@@ -29,7 +30,7 @@ class TopicListView : ScopedView("Topics") {
 
     private val viewModel = ViewModel()
     private val controller: TopicListController by inject()
-    private val topicListView: ListView<Topic> = listview(viewModel.observableTopics)
+    private val topicListView: ListView<Topic> = listview(viewModel.filteredList)
 
     override val root = borderpane {
 
@@ -40,7 +41,7 @@ class TopicListView : ScopedView("Topics") {
             titledpane("Topics") {
                 topicListView.attachTo(this) {
                     selectionModel.selectionMode = SelectionMode.SINGLE
-                    selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic ->
+                    selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic? ->
                         logger.debug("Changed selected topic to {}", newValue)
                         viewModel.selectedTopic = newValue
                         loadPreview()
@@ -51,19 +52,16 @@ class TopicListView : ScopedView("Topics") {
                     center = textfield {
                         promptText = "Filter here"
                         textProperty().addListener { _, _, newValue ->
-                            viewModel.topicFilter = { it.contains(newValue) }
-                            filterTopics()
-                        }
-                        style {
-                            fitToWidth = true
+                            viewModel.filteredList.predicate = Predicate { it.name.contains(newValue) }
                         }
                     }
                     right = button("Refresh") {
                         action {
                             fxLaunch(this) {
-                                viewModel.topicList = controller.getTopics().toList()
+                                val list = controller.getTopics().toList()
                                 onMain {
-                                    filterTopics()
+                                    viewModel.topicList.clear()
+                                    viewModel.topicList.addAll(list)
                                 }
                             }
                         }
@@ -119,12 +117,6 @@ class TopicListView : ScopedView("Topics") {
 
         }
     }
-
-    private fun filterTopics() {
-        viewModel.observableTopics.clear()
-        viewModel.observableTopics.addAll(viewModel.topicList.filter { viewModel.topicFilter(it.name) })
-    }
-
 
 }
 
