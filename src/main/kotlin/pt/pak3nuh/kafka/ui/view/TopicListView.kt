@@ -7,7 +7,7 @@ import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
-import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
+import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
 import tornadofx.*
@@ -15,8 +15,7 @@ import java.util.function.Predicate
 
 private val logger = getSlfLogger<TopicListView>()
 
-// todo when close doesn't kill app after selected one topic
-class TopicListView : ScopedView("Topics") {
+class TopicListView : CoroutineView("Topics") {
 
     // todo some of this state should be controller
     private class ViewModel {
@@ -31,6 +30,10 @@ class TopicListView : ScopedView("Topics") {
     private val viewModel = ViewModel()
     private val controller: TopicListController by inject()
     private val topicListView: ListView<Topic> = listview(viewModel.filteredList)
+
+    override fun onCloseRequested() {
+        controller.close()
+    }
 
     override val root = borderpane {
 

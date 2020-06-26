@@ -3,10 +3,10 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.scene.Parent
 import pt.pak3nuh.kafka.ui.controller.TopicDetailController
 import pt.pak3nuh.kafka.ui.service.deserializer.Deserializer
-import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
+import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import tornadofx.*
 
-class TopicDetailView: ScopedView("Topic Detail") {
+class TopicDetailView: CoroutineView("Topic Detail") {
 
     private val keyDeserializer: Deserializer by param()
     private val valueDeserializer: Deserializer by param()

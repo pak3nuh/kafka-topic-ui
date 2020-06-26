@@ -2,21 +2,29 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
-import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
 import pt.pak3nuh.kafka.ui.controller.LoginController
-import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Broker
-import pt.pak3nuh.kafka.ui.view.coroutine.ScopedView
+import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.*
+import tornadofx.action
+import tornadofx.bind
+import tornadofx.borderpane
+import tornadofx.bottom
+import tornadofx.button
+import tornadofx.center
+import tornadofx.field
+import tornadofx.fieldset
+import tornadofx.form
+import tornadofx.hbox
+import tornadofx.textfield
 import java.util.function.UnaryOperator
 
 private val logger = getSlfLogger<LoginView>()
 
-class LoginView : ScopedView("Login") {
+class LoginView : CoroutineView("Login") {
 
     private val controller: LoginController by inject()
     private val viewModel = ViewModel()

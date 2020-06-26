@@ -7,6 +7,8 @@ import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.PreviewCache
 import pt.pak3nuh.kafka.ui.service.await
 import pt.pak3nuh.kafka.ui.service.consumer.createConsumerProperties
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 private val logger = getSlfLogger<Broker>()
@@ -38,9 +40,17 @@ class Broker(val host: String, val port: Int, private val adminClient: AdminClie
     }
 
     override fun close() {
-        adminClient.close()
-        consumer.close()
-        cache.clear()
+        logger.info("Closing broker")
+        val duration = Duration.of(1, ChronoUnit.SECONDS)
+        try {
+            adminClient.close(duration)
+            consumer.wakeup()
+            consumer.close(duration)
+            cache.clear()
+        } catch (e: Exception) {
+            logger.error("Error closing broker", e)
+            throw e
+        }
     }
 }
 

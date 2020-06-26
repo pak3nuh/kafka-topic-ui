@@ -9,7 +9,7 @@ import pt.pak3nuh.kafka.ui.log.getSlfLogger
 
 private val logger = getSlfLogger("pt.pak3nuh.kafka.ui.view.coroutine.CoroutinesKt")
 
-fun ScopedView.fxLaunch(
+fun CoroutineView.fxLaunch(
     vararg disableNodes: Node,
     bgAction: suspend () -> Unit
 ): Job {
