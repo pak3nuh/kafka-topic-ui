@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import pt.pak3nuh.kafka.ui.injector.SpringContainer
 import pt.pak3nuh.kafka.ui.view.LoginView
 import tornadofx.*
@@ -15,12 +16,18 @@ import kotlin.coroutines.CoroutineContext
 class KafkaUiApp : App(LoginView::class, Styles::class, Scope()), CoroutineScope {
     val parentJob = SupervisorJob()
     private val counter = AtomicInteger(1)
+    private val threadPool = Executors.newFixedThreadPool(2) {
+        Thread(it, "kafka-ui-coroutine-${counter.getAndIncrement()}")
+    }
     override val coroutineContext: CoroutineContext = parentJob +
-            Executors.newFixedThreadPool(2) {
-                Thread(it, "kafka-ui-coroutine-${counter.getAndIncrement()}")
-            }.asCoroutineDispatcher() +
+            threadPool.asCoroutineDispatcher() +
             CoroutineName("application")
 
+    override fun stop() {
+        super.stop()
+        coroutineContext.cancel()
+        threadPool.shutdown()
+    }
 }
 
 fun main(args: Array<String>) {

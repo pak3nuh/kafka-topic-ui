@@ -32,7 +32,7 @@ class TopicListView : CoroutineView("Topics") {
     private val topicListView: ListView<Topic> = listview(viewModel.filteredList)
 
     override fun onCloseRequested() {
-        controller.close()
+        controller.shutdownApp()
     }
 
     override val root = borderpane {

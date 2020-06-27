@@ -1,24 +1,28 @@
 package pt.pak3nuh.kafka.ui.service
 
-import kotlinx.coroutines.cancel
+import javafx.application.Platform
 import org.springframework.stereotype.Service
-import pt.pak3nuh.kafka.ui.app.asKafkaUi
 import pt.pak3nuh.kafka.ui.config.DiBeanRegister
-import tornadofx.FX
-import java.util.concurrent.CancellationException
+import pt.pak3nuh.kafka.ui.log.getSlfLogger
+import kotlin.concurrent.thread
 import kotlin.system.exitProcess
+
+private val logger = getSlfLogger<ApplicationService>()
 
 @Service
 class ApplicationService(
         private val diBeanRegister: DiBeanRegister
 ) {
     fun shutdown() {
-        FX.application.asKafkaUi().apply {
-            coroutineContext.cancel(CancellationException("Shutdown"))
-            stop()
-        }
+        logger.info("Invoking application shutdown")
         diBeanRegister.shutdown()
-        exitProcess(0) // shouldn't need to call this
+        Platform.exit()
+        // shouldn't need to do this
+        thread(isDaemon = true) {
+            Thread.sleep(3_000)
+            logger.info("Forcing process exit")
+            exitProcess(0)
+        }
     }
 
 }

@@ -29,7 +29,7 @@ class TopicListController : Controller() {
         }
     }
 
-    fun close() {
+    fun shutdownApp() {
         applicationService.shutdown()
     }
 
