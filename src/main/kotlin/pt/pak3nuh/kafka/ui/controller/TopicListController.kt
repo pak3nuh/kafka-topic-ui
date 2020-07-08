@@ -1,15 +1,17 @@
 package pt.pak3nuh.kafka.ui.controller
 
-import pt.pak3nuh.kafka.ui.service.Broker
-import pt.pak3nuh.kafka.ui.service.Topic
+import pt.pak3nuh.kafka.ui.service.ApplicationService
+import pt.pak3nuh.kafka.ui.service.broker.Broker
+import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerProviderService
-import tornadofx.*
+import tornadofx.Controller
 
-class TopicsController : Controller() {
+class TopicListController : Controller() {
 
-    private val broker by param<Broker>()
+    private val broker by di<Broker>()
     private val deserializerService by di<DeserializerProviderService>()
+    private val applicationService by di<ApplicationService>()
 
     suspend fun getTopics(): Sequence<Topic> {
         return broker.listTopics()
@@ -19,17 +21,16 @@ class TopicsController : Controller() {
 
     val host: String = "${broker.host}:${broker.port}"
 
-    suspend fun previewKeys(newTopic: Topic, metadata: DeserializerMetadata): List<String> {
-        val records = broker.preview(newTopic)
+    suspend fun previewKeys(newTopic: Topic, metadata: DeserializerMetadata, refresh: Boolean): List<String> {
+        val records = broker.preview(newTopic, refresh)
         val deserializer = deserializerService.createDeserializer(metadata)
         return records.map {
             if (it.first == null) "null" else deserializer.deserialize(it.first!!)
         }
     }
 
-    companion object {
-        fun find(parent: Component, broker: Broker) =
-                parent.find<TopicsController>(TopicsController::broker.name to broker)
+    fun shutdownApp() {
+        applicationService.shutdown()
     }
 
 }

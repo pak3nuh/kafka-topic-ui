@@ -16,7 +16,7 @@ open class DeserializerProviderService {
     }
 
     fun availableDeserializers(): Sequence<DeserializerMetadata> =
-            providers.flatMap { it.deserializers.asIterable() }.asSequence()
+            providers.asSequence().flatMap { it.deserializers.asSequence() }
 
     fun createDeserializer(metadata: DeserializerMetadata): Deserializer {
         return providers.first { metadata in it.deserializers }.createDeserializer(metadata.clazz)

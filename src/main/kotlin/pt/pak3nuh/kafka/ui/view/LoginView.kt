@@ -1,43 +1,57 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
-import javafx.scene.control.TextField
 import javafx.scene.control.TextFormatter
-import pt.pak3nuh.kafka.ui.controller.TopicsController
+import pt.pak3nuh.kafka.ui.controller.LoginController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
-import pt.pak3nuh.kafka.ui.service.Broker
-import pt.pak3nuh.kafka.ui.service.BrokerService
+import pt.pak3nuh.kafka.ui.service.broker.Broker
+import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.*
+import tornadofx.action
+import tornadofx.bind
+import tornadofx.borderpane
+import tornadofx.bottom
+import tornadofx.button
+import tornadofx.center
+import tornadofx.field
+import tornadofx.fieldset
+import tornadofx.form
+import tornadofx.hbox
+import tornadofx.textfield
 import java.util.function.UnaryOperator
 
 private val logger = getSlfLogger<LoginView>()
 
-class LoginView : View("Login") {
+class LoginView : CoroutineView("Login") {
 
-    private val brokerService by di<BrokerService>()
-    private var hostText: TextField by singleAssign()
-    private var hostPort: TextField by singleAssign()
+    private val controller: LoginController by inject()
+    private val viewModel = ViewModel()
 
     override val root = borderpane {
         center {
             form {
                 fieldset {
                     field("Host") {
-                        hostText = textfield()
-                        hostText.text = "127.0.0.1"
+                        textfield {
+                            bind(viewModel.hostText)
+                            viewModel.hostText.value = "127.0.0.1"
+                        }
                     }
                     field("Port") {
-                        hostPort = textfield()
-                        hostPort.textFormatter = TextFormatter<String>(UnaryOperator { change ->
-                            if (change.text.matches("[0-9]*".toRegex())) {
-                                change
-                            } else {
-                                null
-                            }
-                        })
-                        hostPort.text = "9092"
+                        textfield {
+                            bind(viewModel.hostPort)
+                            viewModel.hostPort.value = "9092"
+                            textFormatter = TextFormatter<String>(UnaryOperator { change ->
+                                if (change.text.matches("[0-9]*".toRegex())) {
+                                    change
+                                } else {
+                                    null
+                                }
+                            })
+
+                        }
                     }
                 }
             }
@@ -49,15 +63,16 @@ class LoginView : View("Login") {
                     action {
                         fxLaunch(this) {
                             val broker = tryConnect()
-                            if (broker != null) {
-                                onMain {
-                                    val controller = TopicsController.find(this@LoginView, broker)
-                                    val topicView = TopicsView.find(this@LoginView, controller)
+                            onMain {
+                                if (broker != null) {
+                                    val topicView = find<TopicListView>()
                                     topicView.currentWindow?.apply {
                                         width = 500.0
                                         height = 500.0
                                     }
                                     this@LoginView.replaceWith(topicView)
+                                } else {
+                                    ErrorView.find(this@LoginView, "Cannot connect to broker").openModal()
                                 }
                             }
                         }
@@ -68,17 +83,14 @@ class LoginView : View("Login") {
     }
 
     private suspend fun tryConnect(): Broker? {
-        val host: String = hostText.text
-        val port: String = hostPort.text
+        val host: String = viewModel.hostText.value
+        val port: String = viewModel.hostPort.value
         logger.info("Connecting to $host:$port")
-        val broker = brokerService.connect(host, port.toInt())
-        return if (broker.isAvailable())
-            broker
-        else {
-            onMain {
-                ErrorView.find(this, "Cannot connect to broker").openModal()
-            }
-            null
-        }
+        return controller.getBroker(host, port)
+    }
+
+    private class ViewModel {
+        val hostText = SimpleStringProperty()
+        val hostPort = SimpleStringProperty()
     }
 }

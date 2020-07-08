@@ -54,7 +54,7 @@ dependencies {
     testRuntime "org.junit.jupiter:junit-jupiter-engine:$junit_version"
 }
 
-mainClassName = "pt.pak3nuh.kafka.ui.app.MyApp"
+mainClassName = "pt.pak3nuh.kafka.ui.app.KafkaUiApp"
 
 jar {
     manifest {
