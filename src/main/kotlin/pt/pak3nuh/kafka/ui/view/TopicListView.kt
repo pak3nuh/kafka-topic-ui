@@ -10,14 +10,25 @@ import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.*
+import tornadofx.action
+import tornadofx.attachTo
+import tornadofx.borderpane
+import tornadofx.button
+import tornadofx.combobox
+import tornadofx.hbox
+import tornadofx.label
+import tornadofx.listview
+import tornadofx.observableList
+import tornadofx.onDoubleClick
+import tornadofx.textfield
+import tornadofx.titledpane
+import tornadofx.vbox
 import java.util.function.Predicate
 
 private val logger = getSlfLogger<TopicListView>()
 
 class TopicListView : CoroutineView("Topics") {
 
-    // todo some of this state should be controller
     private class ViewModel {
         val previewList = observableList<String>()
         var topicList = observableList<Topic>()
@@ -51,7 +62,7 @@ class TopicListView : CoroutineView("Topics") {
                     }
                     onDoubleClick {
                         val topic: Topic = viewModel.selectedTopic ?: kotlin.error("No topic selected")
-                        val detailView = TopicDetailView.build(
+                        val detailView = TopicDetailView.create(
                                 scope,
                                 topic,
                                 viewModel.keyDeserializer ?: kotlin.error("No key deserializer"),
@@ -121,8 +132,7 @@ class TopicListView : CoroutineView("Topics") {
         val topic = viewModel.selectedTopic ?: return
         val deserializer = viewModel.keyDeserializer ?: return
         fxLaunch(topicListView) {
-            val records = controller
-                    .previewKeys(topic, deserializer, refresh)
+            val records = controller.previewKeys(topic, deserializer, refresh)
 
             onMain {
                 viewModel.previewList.clear()

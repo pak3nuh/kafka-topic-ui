@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import pt.pak3nuh.kafka.ui.app.kafkaUiApplication
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 
 private val logger = getSlfLogger("pt.pak3nuh.kafka.ui.view.coroutine.CoroutinesKt")
@@ -27,6 +28,12 @@ fun CoroutineView.fxLaunch(
 
 suspend inline fun onMain(crossinline fgAction: suspend () -> Unit) {
     withContext(Dispatchers.Main) {
+        fgAction()
+    }
+}
+
+suspend inline fun onKafka(crossinline fgAction: suspend () -> Unit) {
+    withContext(kafkaUiApplication.kafkaScope.coroutineContext) {
         fgAction()
     }
 }

@@ -1,8 +1,8 @@
 package pt.pak3nuh.kafka.ui.service
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.apache.kafka.common.KafkaFuture
+import pt.pak3nuh.kafka.ui.app.kafkaUiApplication
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -26,7 +26,7 @@ suspend fun <T> KafkaFuture<T>.await(): T {
 }
 
 fun <T> future(
-        context: CoroutineContext = Dispatchers.Default,
+        context: CoroutineContext = kafkaUiApplication.kafkaScope.coroutineContext,
         block: suspend () -> T
 ): CompletableFuture<T> {
     val future = CompletableFuture<T>()
