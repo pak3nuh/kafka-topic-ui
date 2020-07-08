@@ -24,6 +24,9 @@ plugins {
     id "application"
 }
 
+group = "pt.pak3nuh.kafka"
+version = "0.1.0"
+
 javafx {
     version = "11"
     modules = [ 'javafx.controls', 'javafx.fxml' ]

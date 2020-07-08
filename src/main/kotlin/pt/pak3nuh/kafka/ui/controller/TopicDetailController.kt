@@ -12,6 +12,7 @@ import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.TopicDetailView
 import tornadofx.Controller
+import java.io.File
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import kotlin.coroutines.coroutineContext
@@ -67,5 +68,13 @@ class TopicDetailController : Controller() {
     fun close() {
         logger.debug("Canceling subscription on topic {}", topic)
         job?.cancel()
+    }
+
+    suspend fun sendRecord(keyFile: File?, valueFile: File?) {
+        subscriptionService.sendRecord(
+                topic,
+                keyFile?.readBytes(),
+                valueFile?.readBytes()
+        )
     }
 }

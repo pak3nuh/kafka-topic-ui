@@ -25,7 +25,7 @@ class TopicListController : Controller() {
         val records = broker.preview(newTopic, refresh)
         val deserializer = deserializerService.createDeserializer(metadata)
         return records.map {
-            if (it.first == null) "null" else deserializer.deserialize(it.first!!)
+            it.first?.let(deserializer::deserialize) ?: "[NULL]"
         }
     }
 

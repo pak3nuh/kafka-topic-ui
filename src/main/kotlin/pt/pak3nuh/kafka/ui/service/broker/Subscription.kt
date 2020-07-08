@@ -25,6 +25,7 @@ class Subscription(
     )
 
     fun initSync() {
+        // todo if same topic is opened several times, it doesn't start from the beginning
         consumer.subscribe(listOf(topic.name))
     }
 
