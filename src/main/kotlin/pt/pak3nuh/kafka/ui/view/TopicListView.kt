@@ -49,6 +49,16 @@ class TopicListView : CoroutineView("Topics") {
                         viewModel.selectedTopic = newValue
                         loadPreview()
                     }
+                    onDoubleClick {
+                        val topic: Topic = viewModel.selectedTopic ?: kotlin.error("No topic selected")
+                        val detailView = TopicDetailView.build(
+                                scope,
+                                topic,
+                                viewModel.keyDeserializer ?: kotlin.error("No key deserializer"),
+                                viewModel.valueDeserializer ?: kotlin.error("No value deserializer")
+                        )
+                        detailView.openWindow()
+                    }
                 }
 
                 borderpane {
@@ -80,6 +90,7 @@ class TopicListView : CoroutineView("Topics") {
                 collapsibleProperty().value = true
                 val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
                 viewModel.keyDeserializer = deserializerList[0].metadata
+                viewModel.valueDeserializer = deserializerList[0].metadata
                 hbox {
                     label("Key:")
                     combobox(values = deserializerList) {

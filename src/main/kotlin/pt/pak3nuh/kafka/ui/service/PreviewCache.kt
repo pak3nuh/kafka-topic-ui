@@ -1,10 +1,11 @@
 package pt.pak3nuh.kafka.ui.service
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import pt.pak3nuh.kafka.ui.app.kafkaUiApplication
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.consumer.BytesConsumer
-import pt.pak3nuh.kafka.ui.view.coroutine.KafkaDispatcher
 import java.time.Duration
 
 private val logger = getSlfLogger<PreviewCache>()
@@ -26,7 +27,7 @@ class PreviewCache(private val consumer: BytesConsumer) {
     fun clear(): Unit = cache.clear()
 
     private suspend fun fetch(topic: Topic, numberRecords: Int): ByteList {
-        return withContext(KafkaDispatcher) {
+        return withContext(kafkaUiApplication.kafkaScope.coroutineContext) {
             val topicName = topic.name
             logger.debug("Previewing topic {}", topicName)
             consumer.subscribe(listOf(topicName))

@@ -18,4 +18,8 @@ class SpringContainer : DIContainer {
     override fun <T : Any> getInstance(type: KClass<T>, name: String): T {
         return context.getBean(name, type.java)
     }
+
+    fun close() {
+        context.close()
+    }
 }

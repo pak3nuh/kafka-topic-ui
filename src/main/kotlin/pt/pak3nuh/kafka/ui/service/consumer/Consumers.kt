@@ -8,7 +8,8 @@ import java.util.Properties
 fun createConsumerProperties(
     servers: String,
     groupId: String,
-    earliest: Boolean = true
+    earliest: Boolean = true,
+    autoCommit: Boolean = true
 ): Properties {
     val props = Properties()
     props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = servers
@@ -16,6 +17,7 @@ fun createConsumerProperties(
     props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = ByteArrayDeserializer::class.qualifiedName
     props[ConsumerConfig.GROUP_ID_CONFIG] = groupId
     props[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = if (earliest) "earliest" else "latest"
+    props[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = autoCommit
     return props
 }
 

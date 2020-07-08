@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import pt.pak3nuh.kafka.ui.app.wrapEx
 import pt.pak3nuh.kafka.ui.config.DiBeanRegister
-import pt.pak3nuh.kafka.ui.log.getSlfLogger
+import pt.pak3nuh.kafka.ui.service.deserializer.Deserializer
 
 @Service
 class BrokerService @Autowired constructor(

@@ -10,19 +10,9 @@ import kotlin.system.exitProcess
 private val logger = getSlfLogger<ApplicationService>()
 
 @Service
-class ApplicationService(
-        private val diBeanRegister: DiBeanRegister
-) {
+class ApplicationService {
     fun shutdown() {
         logger.info("Invoking application shutdown")
-        diBeanRegister.shutdown()
         Platform.exit()
-        // shouldn't need to do this
-        thread(isDaemon = true) {
-            Thread.sleep(3_000)
-            logger.info("Forcing process exit")
-            exitProcess(0)
-        }
     }
-
 }
