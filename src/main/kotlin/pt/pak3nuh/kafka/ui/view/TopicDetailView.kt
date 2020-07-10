@@ -1,6 +1,8 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.geometry.Pos
 import javafx.scene.Parent
@@ -21,6 +23,7 @@ import tornadofx.action
 import tornadofx.bind
 import tornadofx.borderpane
 import tornadofx.button
+import tornadofx.checkbox
 import tornadofx.enableWhen
 import tornadofx.find
 import tornadofx.hbox
@@ -31,7 +34,7 @@ import tornadofx.tableview
 import tornadofx.titledpane
 import tornadofx.vbox
 import java.io.File
-import java.util.concurrent.atomic.AtomicLong
+import java.time.LocalDateTime
 import kotlin.reflect.KMutableProperty
 
 class TopicDetailView : CoroutineView("Topic Detail") {
@@ -80,15 +83,24 @@ class TopicDetailView : CoroutineView("Topic Detail") {
                     model.recordList.clear()
                 }
             }
+            checkbox("Follow", model.followCheck)
         }
 
         center = tableview(model.recordList) {
-            readonlyColumn("Key", Record::key)
-            readonlyColumn("Value", Record::value)
+            readonlyColumn("Time", Record::time)
+            readonlyColumn("Key", Record::key) { prefWidth = 200.0 }
+            readonlyColumn("Value", Record::value) { prefWidth = 200.0 }
+            model.recordList.addListener(ListChangeListener {
+                if (model.followCheck.value) {
+                    this.scrollTo(model.recordList.size - 1)
+                }
+            })
         }
 
         bottom = titledpane("Send data") {
             hbox {
+                spacing = 20.0
+                alignment = Pos.CENTER
                 add(buildRadioGroup("Null key", model::keyFile))
                 add(buildRadioGroup("Null value", model::valueFile))
                 button("Send") {
@@ -176,6 +188,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
                 throw UnsupportedOperationException()
             }
         }
+        val followCheck = SimpleBooleanProperty(false)
 
         enum class Status(val text: String) {
             NotStarted("Start"), Active("Pause"), Paused("Resume")
@@ -194,10 +207,6 @@ class TopicDetailView : CoroutineView("Topic Detail") {
     }
 
     data class Record(val key: String, val value: String) {
-        val line = lineCounter.getAndIncrement()
-
-        private companion object {
-            val lineCounter = AtomicLong(0)
-        }
+        val time: LocalDateTime = LocalDateTime.now()
     }
 }

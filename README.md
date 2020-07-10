@@ -15,6 +15,5 @@ It uses the kafka client version 2.2.0.
 ## Features to come
 
 - Create/Delete topics
-- Follow records on detail view
 - Finish custom deserializers
 - Save preferences to a file
