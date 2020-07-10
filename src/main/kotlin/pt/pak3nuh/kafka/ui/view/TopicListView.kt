@@ -1,6 +1,9 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.beans.property.Property
+import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.transformation.FilteredList
+import javafx.geometry.Pos
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
 import pt.pak3nuh.kafka.ui.controller.TopicListController
@@ -15,11 +18,11 @@ import tornadofx.attachTo
 import tornadofx.borderpane
 import tornadofx.button
 import tornadofx.combobox
+import tornadofx.enableWhen
 import tornadofx.hbox
 import tornadofx.label
 import tornadofx.listview
 import tornadofx.observableList
-import tornadofx.onDoubleClick
 import tornadofx.textfield
 import tornadofx.titledpane
 import tornadofx.vbox
@@ -35,7 +38,7 @@ class TopicListView : CoroutineView("Topics") {
         val filteredList: FilteredList<Topic> = topicList.filtered { true }
         var keyDeserializer: DeserializerMetadata? = null
         var valueDeserializer: DeserializerMetadata? = null
-        var selectedTopic: Topic? = null
+        var selectedTopic: Property<Topic?> = SimpleObjectProperty()
     }
 
     private val viewModel = ViewModel()
@@ -57,18 +60,8 @@ class TopicListView : CoroutineView("Topics") {
                     selectionModel.selectionMode = SelectionMode.SINGLE
                     selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic? ->
                         logger.debug("Changed selected topic to {}", newValue)
-                        viewModel.selectedTopic = newValue
+                        viewModel.selectedTopic.value = newValue
                         loadPreview()
-                    }
-                    onDoubleClick {
-                        val topic: Topic = viewModel.selectedTopic ?: kotlin.error("No topic selected")
-                        val detailView = TopicDetailView.create(
-                                scope,
-                                topic,
-                                viewModel.keyDeserializer ?: kotlin.error("No key deserializer"),
-                                viewModel.valueDeserializer ?: kotlin.error("No value deserializer")
-                        )
-                        detailView.openWindow()
                     }
                 }
 
@@ -97,29 +90,52 @@ class TopicListView : CoroutineView("Topics") {
                 listview(viewModel.previewList)
             }
 
-            titledpane("Deserializers") {
-                collapsibleProperty().value = true
+            titledpane("Detail") {
                 val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
                 viewModel.keyDeserializer = deserializerList[0].metadata
                 viewModel.valueDeserializer = deserializerList[0].metadata
                 hbox {
-                    label("Key:")
-                    combobox(values = deserializerList) {
-                        selectionModel.select(0)
-                        selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                            viewModel.keyDeserializer = newValue?.metadata
-                            logger.debug("Changed key deserializer to {}", newValue?.metadata?.name)
-                            loadPreview()
+                    spacing = 10.0
+                    val enabled = viewModel.selectedTopic.asBoolean { new -> new != null }
+                    vbox {
+                        label("Key:")
+                        combobox(values = deserializerList) {
+                            enableWhen(enabled)
+                            selectionModel.select(0)
+                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                viewModel.keyDeserializer = newValue?.metadata
+                                logger.debug("Changed key deserializer to {}", newValue?.metadata?.name)
+                                loadPreview()
+                            }
                         }
                     }
-
-                    label("Value:")
-                    combobox(values = deserializerList) {
-                        selectionModel.select(0)
-                        selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-                            viewModel.valueDeserializer = newValue?.metadata
-                            logger.debug("Changed value deserializer to {}", newValue?.metadata?.name)
+                    vbox {
+                        label("Value:")
+                        combobox(values = deserializerList) {
+                            enableWhen(enabled)
+                            selectionModel.select(0)
+                            selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+                                viewModel.valueDeserializer = newValue?.metadata
+                                logger.debug("Changed value deserializer to {}", newValue?.metadata?.name)
+                            }
                         }
+                    }
+                    vbox {
+                        alignment = Pos.BOTTOM_CENTER
+                        button("Open") {
+                            enableWhen(enabled)
+                            action {
+                                val topic: Topic = viewModel.selectedTopic.value ?: error("No topic selected")
+                                val detailView = TopicDetailView.create(
+                                        scope,
+                                        topic,
+                                        viewModel.keyDeserializer ?: error("No key deserializer"),
+                                        viewModel.valueDeserializer ?: error("No value deserializer")
+                                )
+                                detailView.openWindow()
+                            }
+                        }
+
                     }
                 }
             }
@@ -129,7 +145,7 @@ class TopicListView : CoroutineView("Topics") {
     }
 
     private fun loadPreview(refresh: Boolean = false) {
-        val topic = viewModel.selectedTopic ?: return
+        val topic = viewModel.selectedTopic.value ?: return
         val deserializer = viewModel.keyDeserializer ?: return
         fxLaunch(topicListView) {
             val records = controller.previewKeys(topic, deserializer, refresh)

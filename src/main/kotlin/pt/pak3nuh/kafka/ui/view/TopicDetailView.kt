@@ -2,6 +2,7 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
+import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.VBox
@@ -20,6 +21,7 @@ import tornadofx.action
 import tornadofx.bind
 import tornadofx.borderpane
 import tornadofx.button
+import tornadofx.enableWhen
 import tornadofx.find
 import tornadofx.hbox
 import tornadofx.observableList
@@ -41,16 +43,23 @@ class TopicDetailView : CoroutineView("Topic Detail") {
     )))
 
     override val root: Parent = borderpane {
+        prefWidth = 500.0
+        prefHeight = 500.0
         title = topic.name
         // start pause seek settings assignment
         top = hbox {
+            val notStarted = model.status.asBoolean { it == Model.Status.NotStarted }
+            spacing = 10.0
+            alignment = Pos.CENTER
             val group = ToggleGroup()
             radiobutton("Earliest", group) {
+                enableWhen(notStarted)
                 action {
                     model.startOnEarliest = true
                 }
             }
             radiobutton("Latest", group){
+                enableWhen(notStarted)
                 isSelected = true
                 action {
                     model.startOnEarliest = false

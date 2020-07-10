@@ -27,10 +27,10 @@ class SubscriptionService @Autowired constructor(
         return kafkaProducer
     }
 
-    fun subscribe(keyDeserializer: DeserializerMetadata, valueDeserializer: DeserializerMetadata, topic: Topic, earliest: Boolean): Subscription {
+    fun subscribe(keyDeserializer: DeserializerMetadata, valueDeserializer: DeserializerMetadata, topic: Topic): Subscription {
         val key = deserializerProviderService.createDeserializer(keyDeserializer)
         val value = deserializerProviderService.createDeserializer(valueDeserializer)
-        val subscription = Subscription(key, value, topic, broker.host, broker.port, earliest)
+        val subscription = Subscription(key, value, topic, broker.host, broker.port)
         subscription.initSync()
         return subscription
     }
