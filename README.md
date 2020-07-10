@@ -1,6 +1,6 @@
 # kafka-topic-ui
 
-UI for viewing or publishing events on a kafka topics.
+UI for viewing or publishing events on a kafka topics built on OpenJFX11 and Kotlin.
 
 It uses the kafka client version 2.2.0.
 
@@ -14,6 +14,7 @@ It uses the kafka client version 2.2.0.
 
 ## Features to come
 
+- SSL login
 - Create/Delete topics
 - Finish custom deserializers
 - Save preferences to a file
