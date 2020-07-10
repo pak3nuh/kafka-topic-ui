@@ -2,6 +2,7 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
+import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.VBox
@@ -41,9 +42,13 @@ class TopicDetailView : CoroutineView("Topic Detail") {
     )))
 
     override val root: Parent = borderpane {
+        prefWidth = 500.0
+        prefHeight = 500.0
         title = topic.name
         // start pause seek settings assignment
         top = hbox {
+            spacing = 10.0
+            alignment = Pos.CENTER
             val group = ToggleGroup()
             radiobutton("Earliest", group) {
                 action {
