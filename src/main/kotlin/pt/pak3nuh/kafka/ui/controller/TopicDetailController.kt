@@ -32,8 +32,11 @@ class TopicDetailController : Controller() {
 
     suspend fun start(onRecords: OnRecords) {
         logger.info("Starting subscription on topic {}", topic)
-        val subscription = subscriptionService.subscribe(keyMetadata, valueMetadata, topic, model.startOnEarliest)
+        val subscription = subscriptionService.subscribe(keyMetadata, valueMetadata, topic)
         job = kafkaUiApplication.kafkaScope.launch {
+            if (model.startOnEarliest) {
+                subscription.seekWhenReady(0)
+            }
             poll(subscription, onRecords)
         }
         job?.invokeOnCompletion {

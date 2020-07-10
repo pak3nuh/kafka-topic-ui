@@ -21,6 +21,7 @@ import tornadofx.action
 import tornadofx.bind
 import tornadofx.borderpane
 import tornadofx.button
+import tornadofx.enableWhen
 import tornadofx.find
 import tornadofx.hbox
 import tornadofx.observableList
@@ -47,15 +48,18 @@ class TopicDetailView : CoroutineView("Topic Detail") {
         title = topic.name
         // start pause seek settings assignment
         top = hbox {
+            val notStarted = model.status.asBoolean { it == Model.Status.NotStarted }
             spacing = 10.0
             alignment = Pos.CENTER
             val group = ToggleGroup()
             radiobutton("Earliest", group) {
+                enableWhen(notStarted)
                 action {
                     model.startOnEarliest = true
                 }
             }
             radiobutton("Latest", group){
+                enableWhen(notStarted)
                 isSelected = true
                 action {
                     model.startOnEarliest = false

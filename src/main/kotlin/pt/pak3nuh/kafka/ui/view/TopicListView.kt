@@ -1,7 +1,6 @@
 package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.Property
-import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.transformation.FilteredList
 import javafx.geometry.Pos
@@ -19,6 +18,7 @@ import tornadofx.attachTo
 import tornadofx.borderpane
 import tornadofx.button
 import tornadofx.combobox
+import tornadofx.enableWhen
 import tornadofx.hbox
 import tornadofx.label
 import tornadofx.listview
@@ -96,14 +96,11 @@ class TopicListView : CoroutineView("Topics") {
                 viewModel.valueDeserializer = deserializerList[0].metadata
                 hbox {
                     spacing = 10.0
-                    val disabled = SimpleBooleanProperty(true)
-                    viewModel.selectedTopic.addListener { _, _, new ->
-                        disabled.value = new == null
-                    }
+                    val enabled = viewModel.selectedTopic.asBoolean { new -> new != null }
                     vbox {
                         label("Key:")
                         combobox(values = deserializerList) {
-                            disableProperty().bind(disabled)
+                            enableWhen(enabled)
                             selectionModel.select(0)
                             selectionModel.selectedItemProperty().addListener { _, _, newValue ->
                                 viewModel.keyDeserializer = newValue?.metadata
@@ -115,7 +112,7 @@ class TopicListView : CoroutineView("Topics") {
                     vbox {
                         label("Value:")
                         combobox(values = deserializerList) {
-                            disableProperty().bind(disabled)
+                            enableWhen(enabled)
                             selectionModel.select(0)
                             selectionModel.selectedItemProperty().addListener { _, _, newValue ->
                                 viewModel.valueDeserializer = newValue?.metadata
@@ -126,7 +123,7 @@ class TopicListView : CoroutineView("Topics") {
                     vbox {
                         alignment = Pos.BOTTOM_CENTER
                         button("Open") {
-                            disableProperty().bind(disabled)
+                            enableWhen(enabled)
                             action {
                                 val topic: Topic = viewModel.selectedTopic.value ?: error("No topic selected")
                                 val detailView = TopicDetailView.create(
