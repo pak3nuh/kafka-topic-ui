@@ -14,7 +14,6 @@ import tornadofx.App
 import tornadofx.FX
 import tornadofx.Scope
 import tornadofx.launch
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -25,11 +24,6 @@ private val logger = getSlfLogger<KafkaUiApp>()
  * Convenience field to store the application after initialized
  */
 lateinit var kafkaUiApplication: KafkaUiApp
-
-/**
- * Unique ID per application so that consumer groups don't clash
- */
-val applicationUUID = UUID.randomUUID().toString()
 
 class KafkaUiApp : App(LoginView::class, Styles::class, Scope()), CoroutineScope {
     val parentJob = SupervisorJob()

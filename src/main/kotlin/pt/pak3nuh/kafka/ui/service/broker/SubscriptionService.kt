@@ -4,7 +4,8 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
+import pt.pak3nuh.kafka.ui.config.SettingsConfig
 import pt.pak3nuh.kafka.ui.service.consumer.createProducerProperties
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerProviderService
@@ -12,10 +13,11 @@ import pt.pak3nuh.kafka.ui.view.coroutine.onKafka
 import java.time.Duration
 
 @Lazy
-@Component
+@Service
 class SubscriptionService @Autowired constructor(
         private val broker: Broker,
-        private val deserializerProviderService: DeserializerProviderService
+        private val deserializerProviderService: DeserializerProviderService,
+        private val settingsConfig: SettingsConfig
 ) : AutoCloseable {
 
     private val closeHandlers = mutableListOf<() -> Unit>()
@@ -30,7 +32,8 @@ class SubscriptionService @Autowired constructor(
     fun subscribe(keyDeserializer: DeserializerMetadata, valueDeserializer: DeserializerMetadata, topic: Topic): Subscription {
         val key = deserializerProviderService.createDeserializer(keyDeserializer)
         val value = deserializerProviderService.createDeserializer(valueDeserializer)
-        val subscription = Subscription(key, value, topic, broker.host, broker.port)
+        val groupId = "kafka-ui-topic-listener-${settingsConfig.applicationUUID}-${topic.name}"
+        val subscription = Subscription(key, value, topic, broker.host, broker.port, groupId)
         subscription.initSync()
         return subscription
     }

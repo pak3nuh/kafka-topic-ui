@@ -3,6 +3,7 @@ package pt.pak3nuh.kafka.ui.view
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.control.TextFormatter
+import pt.pak3nuh.kafka.ui.config.SettingsConfig
 import pt.pak3nuh.kafka.ui.controller.LoginController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Broker
@@ -27,6 +28,7 @@ private val logger = getSlfLogger<LoginView>()
 class LoginView : CoroutineView("Login") {
 
     private val controller: LoginController by inject()
+    private val settings: SettingsConfig by di()
     private val viewModel = ViewModel()
 
     override val root = borderpane {
@@ -66,10 +68,7 @@ class LoginView : CoroutineView("Login") {
                             onMain {
                                 if (broker != null) {
                                     val topicView = find<TopicListView>()
-                                    topicView.currentWindow?.apply {
-                                        width = 500.0
-                                        height = 500.0
-                                    }
+                                    settings.configureDefaults(topicView)
                                     this@LoginView.replaceWith(topicView)
                                 } else {
                                     ErrorView.find(this@LoginView, "Cannot connect to broker").openModal()

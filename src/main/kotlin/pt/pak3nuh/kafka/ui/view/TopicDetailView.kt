@@ -2,14 +2,17 @@ package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.util.StringConverter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pt.pak3nuh.kafka.ui.app.copy
 import pt.pak3nuh.kafka.ui.controller.TopicDetailController
@@ -27,9 +30,11 @@ import tornadofx.checkbox
 import tornadofx.enableWhen
 import tornadofx.find
 import tornadofx.hbox
+import tornadofx.label
 import tornadofx.observableList
 import tornadofx.radiobutton
 import tornadofx.readonlyColumn
+import tornadofx.style
 import tornadofx.tableview
 import tornadofx.titledpane
 import tornadofx.vbox
@@ -46,22 +51,20 @@ class TopicDetailView : CoroutineView("Topic Detail") {
     )))
 
     override val root: Parent = borderpane {
-        prefWidth = 500.0
-        prefHeight = 500.0
-        title = topic.name
+        title = "Topic View: ${topic.name}"
         // start pause seek settings assignment
         top = hbox {
             val notStarted = model.status.asBoolean { it == Model.Status.NotStarted }
             spacing = 10.0
             alignment = Pos.CENTER
             val group = ToggleGroup()
-            radiobutton("Earliest", group) {
+            radiobutton("From start", group) {
                 enableWhen(notStarted)
                 action {
                     model.startOnEarliest = true
                 }
             }
-            radiobutton("Latest", group){
+            radiobutton("Last offset", group){
                 enableWhen(notStarted)
                 isSelected = true
                 action {
@@ -88,8 +91,8 @@ class TopicDetailView : CoroutineView("Topic Detail") {
 
         center = tableview(model.recordList) {
             readonlyColumn("Time", Record::time)
-            readonlyColumn("Key", Record::key) { prefWidth = 200.0 }
-            readonlyColumn("Value", Record::value) { prefWidth = 200.0 }
+            readonlyColumn("Key (${controller.keyMetadata.name})", Record::key) { prefWidth = 200.0 }
+            readonlyColumn("Value (${controller.valueMetadata.name})", Record::value) { prefWidth = 200.0 }
             model.recordList.addListener(ListChangeListener {
                 if (model.followCheck.value) {
                     this.scrollTo(model.recordList.size - 1)
@@ -98,6 +101,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
         }
 
         bottom = titledpane("Send data") {
+            isExpanded = false
             hbox {
                 spacing = 20.0
                 alignment = Pos.CENTER
@@ -108,10 +112,16 @@ class TopicDetailView : CoroutineView("Topic Detail") {
                         fxLaunch(this) {
                             controller.sendRecord(model.keyFile, model.valueFile)
                             onMain {
-                                ErrorView.find(this@TopicDetailView, "Message sent").openModal()
+                                model.messageLabelText.value = "Message sent"
+                                delay(2_000)
+                                model.messageLabelText.value = ""
                             }
                         }
                     }
+                }
+                label(model.messageLabelText) {
+                    prefWidth = 200.0
+                    style { this.textFill = Color.RED }
                 }
             }
         }
@@ -189,6 +199,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
             }
         }
         val followCheck = SimpleBooleanProperty(false)
+        val messageLabelText = SimpleStringProperty()
 
         enum class Status(val text: String) {
             NotStarted("Start"), Active("Pause"), Paused("Resume")
