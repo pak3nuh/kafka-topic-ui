@@ -5,7 +5,6 @@ import kotlinx.coroutines.isActive
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
-import pt.pak3nuh.kafka.ui.app.applicationUUID
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.consumer.createConsumerProperties
 import pt.pak3nuh.kafka.ui.service.deserializer.Deserializer
@@ -24,10 +23,11 @@ class Subscription(
         private val valueDeserializer: Deserializer,
         private val topic: Topic,
         host: String,
-        port: Int
+        port: Int,
+        groupId: String
 ) : AutoCloseable {
     private val consumer = KafkaConsumer<ByteArray, ByteArray>(
-            createConsumerProperties("$host:$port", "kafka-ui-topic-listener-${applicationUUID}-${topic.name}", earliest = false)
+            createConsumerProperties("$host:$port", groupId, earliest = false)
     )
 
     fun initSync() {

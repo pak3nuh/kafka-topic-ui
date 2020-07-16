@@ -6,6 +6,7 @@ import javafx.collections.transformation.FilteredList
 import javafx.geometry.Pos
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
+import pt.pak3nuh.kafka.ui.config.SettingsConfig
 import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Topic
@@ -43,6 +44,7 @@ class TopicListView : CoroutineView("Topics") {
 
     private val viewModel = ViewModel()
     private val controller: TopicListController by inject()
+    private val settings: SettingsConfig by di()
     private val topicListView: ListView<Topic> = listview(viewModel.filteredList)
 
     override fun onCloseRequested() {
@@ -56,6 +58,7 @@ class TopicListView : CoroutineView("Topics") {
         center = vbox {
 
             titledpane("Topics") {
+                isCollapsible = false
                 topicListView.attachTo(this) {
                     selectionModel.selectionMode = SelectionMode.SINGLE
                     selectionModel.selectedItemProperty().addListener { _, _, newValue: Topic? ->
@@ -74,23 +77,14 @@ class TopicListView : CoroutineView("Topics") {
                     }
                     right = button("Refresh") {
                         action {
-                            fxLaunch(this) {
-                                val list = controller.getTopics().toList()
-                                onMain {
-                                    viewModel.topicList.clear()
-                                    viewModel.topicList.addAll(list)
-                                }
-                            }
+                            fxLaunch(this) { refreshTopics() }
                         }
                     }
                 }
             }
 
-            titledpane("Preview") {
-                listview(viewModel.previewList)
-            }
-
-            titledpane("Detail") {
+            titledpane("Data") {
+                expandedProperty().bindBidirectional(viewModel.selectedTopic.asBoolean { it != null })
                 val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
                 viewModel.keyDeserializer = deserializerList[0].metadata
                 viewModel.valueDeserializer = deserializerList[0].metadata
@@ -122,7 +116,7 @@ class TopicListView : CoroutineView("Topics") {
                     }
                     vbox {
                         alignment = Pos.BOTTOM_CENTER
-                        button("Open") {
+                        button("Open topic view") {
                             enableWhen(enabled)
                             action {
                                 val topic: Topic = viewModel.selectedTopic.value ?: error("No topic selected")
@@ -140,8 +134,27 @@ class TopicListView : CoroutineView("Topics") {
                 }
             }
 
+            titledpane("Selected topic keys preview") {
+                isExpanded = false
+                listview(viewModel.previewList)
+            }
+
+            fxLaunch { refreshTopics() }
         }
 
+    }
+
+    override fun onBeforeShow() {
+        super.onBeforeShow()
+        settings.configureDefaults(this)
+    }
+
+    private suspend fun refreshTopics() {
+        val list = controller.getTopics().toList()
+        onMain {
+            viewModel.topicList.clear()
+            viewModel.topicList.addAll(list)
+        }
     }
 
     private fun loadPreview(refresh: Boolean = false) {
