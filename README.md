@@ -5,6 +5,8 @@ is backed up by coroutines.
 
 It uses the kafka client version 2.2.0.
 
+![No image found](./doc/preview.png "Topic view")
+
 # Run the UI
 
 - Install JDK11
