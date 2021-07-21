@@ -13,10 +13,11 @@ import kotlin.math.roundToInt
 
 private val logger = getSlfLogger<Broker>()
 
-class Broker(val host: String, val port: Int, private val adminClient: AdminClient) : AutoCloseable {
+class Broker(val host: String, val port: Int, val securityCredentials: SecurityCredentials?, private val adminClient: AdminClient)
+    : AutoCloseable {
 
     private val consumer = KafkaConsumer<ByteArray, ByteArray>(
-        createConsumerProperties("$host:$port", "kafka-ui-broker-service-${Math.random().roundToInt()}")
+            createConsumerProperties("$host:$port", "kafka-ui-broker-service-${Math.random().roundToInt()}")
     )
     private val cache = PreviewCache(consumer)
 
