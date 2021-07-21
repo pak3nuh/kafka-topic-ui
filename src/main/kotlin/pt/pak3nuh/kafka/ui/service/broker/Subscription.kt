@@ -24,10 +24,11 @@ class Subscription(
         private val topic: Topic,
         host: String,
         port: Int,
-        groupId: String
+        groupId: String,
+        securityCredentials: SecurityCredentials?
 ) : AutoCloseable {
     private val consumer = KafkaConsumer<ByteArray, ByteArray>(
-            createConsumerProperties("$host:$port", groupId, earliest = false)
+            createConsumerProperties("$host:$port", groupId, securityCredentials, earliest = false)
     )
 
     fun initSync() {

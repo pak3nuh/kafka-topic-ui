@@ -17,7 +17,7 @@ class Broker(val host: String, val port: Int, val securityCredentials: SecurityC
     : AutoCloseable {
 
     private val consumer = KafkaConsumer<ByteArray, ByteArray>(
-            createConsumerProperties("$host:$port", "kafka-ui-broker-service-${Math.random().roundToInt()}")
+            createConsumerProperties("$host:$port", "kafka-ui-broker-service-${Math.random().roundToInt()}", securityCredentials)
     )
     private val cache = PreviewCache(consumer)
 

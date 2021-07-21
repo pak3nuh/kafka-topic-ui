@@ -124,7 +124,10 @@ class LoginView : CoroutineView("Login") {
                         requireNotNull(viewModel.truststoreFile),
                         requireNotNull(viewModel.keystoreFile),
                         viewModel.truststorePassword.value ?: "",
-                        viewModel.keystorePassword.value ?: ""
+                        viewModel.keystorePassword.value ?: "",
+                        // todo expose
+                        "JKS",
+                        "JKS",
                 )
                 controller.getBrokerSsl(host, port, credentials)
             }

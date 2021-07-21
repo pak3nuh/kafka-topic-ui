@@ -25,13 +25,7 @@ class BrokerService @Autowired constructor(
                     "group.id" to "kafka-topic-ui-app",
                     "request.timeout.ms" to timeoutMs
             ))
-            securityCredentials?.let { config.putAll(mapOf(
-                    "security.protocol" to "SSL",
-                    "ssl.keystore.location" to it.keystore.absolutePath,
-                    "ssl.keystore.password" to it.keystorePassword,
-                    "ssl.truststore.location" to it.truststore.absolutePath,
-                    "ssl.truststore.password" to it.truststorePassword
-            )) }
+            securityCredentials?.let { config.putAll(it.getAsMap()) }
             val adminClient = AdminClient.create(config)
             val broker = Broker(host, port, securityCredentials, adminClient)
             diBeanRegister.registerBroker(broker)
@@ -46,4 +40,18 @@ data class SecurityCredentials(
         val keystore: File,
         val truststorePassword: String,
         val keystorePassword: String,
-)
+        val keystoreFormat: String,
+        val truststoreFormat: String,
+) {
+    fun getAsMap(): Map<String, Any> {
+        return mapOf(
+                "security.protocol" to "SSL",
+                "ssl.keystore.location" to keystore.absolutePath,
+                "ssl.keystore.password" to keystorePassword,
+                "ssl.truststore.location" to truststore.absolutePath,
+                "ssl.truststore.password" to truststorePassword,
+                "ssl.keystore.type" to keystoreFormat,
+                "ssl.truststore.type" to truststoreFormat
+        )
+    }
+}
