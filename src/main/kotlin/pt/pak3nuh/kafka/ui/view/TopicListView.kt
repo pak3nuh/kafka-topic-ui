@@ -85,7 +85,7 @@ class TopicListView : CoroutineView("Topics") {
                     val toggleGroup = ToggleGroup()
                     val isCustomTopicNameEnabled = SimpleBooleanProperty()
 
-                    radiobutton("List selection", toggleGroup) {
+                    radiobutton("Select form list", toggleGroup) {
                         isSelected = true
                         action {
                             viewModel.selectedTopic.value = null
@@ -97,7 +97,7 @@ class TopicListView : CoroutineView("Topics") {
                         customTopicName.onChange {
                             viewModel.selectedTopic.value = Topic(it ?: "")
                         }
-                        radiobutton("With topic name", toggleGroup) {
+                        radiobutton("Topic name", toggleGroup) {
                             action {
                                 isCustomTopicNameEnabled.value = true
                             }

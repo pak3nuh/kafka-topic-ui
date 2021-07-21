@@ -16,28 +16,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pt.pak3nuh.kafka.ui.app.copy
 import pt.pak3nuh.kafka.ui.controller.TopicDetailController
+import pt.pak3nuh.kafka.ui.service.broker.KafkaRecord
 import pt.pak3nuh.kafka.ui.service.broker.Topic
 import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.Scope
-import tornadofx.action
-import tornadofx.bind
-import tornadofx.borderpane
-import tornadofx.button
-import tornadofx.checkbox
-import tornadofx.enableWhen
-import tornadofx.find
-import tornadofx.hbox
-import tornadofx.label
-import tornadofx.observableList
-import tornadofx.radiobutton
-import tornadofx.readonlyColumn
-import tornadofx.style
-import tornadofx.tableview
-import tornadofx.titledpane
-import tornadofx.vbox
+import tornadofx.*
 import java.io.File
 import java.time.LocalDateTime
 import kotlin.reflect.KMutableProperty
@@ -90,14 +75,39 @@ class TopicDetailView : CoroutineView("Topic Detail") {
         }
 
         center = tableview(model.recordList) {
-            readonlyColumn("Time", Record::time)
-            readonlyColumn("Key (${controller.keyMetadata.name})", Record::key) { prefWidth = 200.0 }
-            readonlyColumn("Value (${controller.valueMetadata.name})", Record::value) { prefWidth = 200.0 }
+            readonlyColumn("Time", DetailRecord::time)
+            readonlyColumn("Key (${controller.keyMetadata.name})", DetailRecord::key) {
+                prefWidth = 200.0
+            }
+            readonlyColumn("Value (${controller.valueMetadata.name})", DetailRecord::value) { prefWidth = 200.0 }
             model.recordList.addListener(ListChangeListener {
                 if (model.followCheck.value) {
                     this.scrollTo(model.recordList.size - 1)
                 }
             })
+            contextmenu {
+                item("Save key") {
+                    action {
+                        val chooseFile = chooseFile("Save as", emptyArray(), mode = FileChooserMode.Save)
+                                .firstOrNull()
+                        val item = selectedItem
+                        if (chooseFile != null && item != null) {
+                            chooseFile.writeBytes(item.kafkaRecord.key ?: ByteArray(0))
+                        }
+                    }
+                }
+                item("Save value") {
+                    action {
+                        val chooseFile = chooseFile("Save as", emptyArray(), mode = FileChooserMode.Save)
+                                .firstOrNull()
+                        val item = selectedItem
+                        if (chooseFile != null && item != null) {
+                            chooseFile.writeBytes(item.kafkaRecord.value ?: ByteArray(0))
+                        }
+                    }
+                }
+            }
+
         }
 
         bottom = titledpane("Send data") {
@@ -169,7 +179,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
     private fun startLoop() {
         launch {
             controller.start { records ->
-                val mapped = records.map { Record(it.first ?: "[NULL]", it.second ?: "[NULL]") }
+                val mapped = records.map { DetailRecord(it.deserializeKey() ?: "[NULL]", it.deserializeValue() ?: "[NULL]", it) }
                 onMain {
                     model.recordList.addAll(mapped)
                 }
@@ -189,7 +199,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
         var keyFile: File? = null
         var valueFile: File? = null
         var startOnEarliest: Boolean = false
-        val recordList: ObservableList<Record> = observableList()
+        val recordList: ObservableList<DetailRecord> = observableList()
         val status = SimpleObjectProperty<Status>(Status.NotStarted)
         val statusConverter = object : StringConverter<Status>() {
             override fun toString(value: Status): String = value.text
@@ -217,7 +227,7 @@ class TopicDetailView : CoroutineView("Topic Detail") {
                 )
     }
 
-    data class Record(val key: String, val value: String) {
+    data class DetailRecord(val key: String, val value: String, val kafkaRecord: KafkaRecord) {
         val time: LocalDateTime = LocalDateTime.now()
     }
 }

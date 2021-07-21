@@ -6,6 +6,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pt.pak3nuh.kafka.ui.app.kafkaUiApplication
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
+import pt.pak3nuh.kafka.ui.service.broker.KafkaRecord
 import pt.pak3nuh.kafka.ui.service.broker.Subscription
 import pt.pak3nuh.kafka.ui.service.broker.SubscriptionService
 import pt.pak3nuh.kafka.ui.service.broker.Topic
@@ -19,7 +20,7 @@ import kotlin.coroutines.coroutineContext
 
 private val logger = getSlfLogger<TopicDetailController>()
 
-typealias OnRecords = suspend (List<Pair<String?, String?>>) -> Unit
+typealias OnRecords = suspend (List<KafkaRecord>) -> Unit
 
 class TopicDetailController : Controller() {
     val topic: Topic by param()

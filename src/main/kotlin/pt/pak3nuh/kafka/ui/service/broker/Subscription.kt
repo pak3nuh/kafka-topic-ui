@@ -36,7 +36,7 @@ class Subscription(
         consumer.subscribe(listOf(topic.name))
     }
 
-    fun pollSync(timeout: Duration): Sequence<Pair<String?, String?>> {
+    fun pollSync(timeout: Duration): Sequence<KafkaRecord> {
         if (logger.isDebugEnabled) {
             data class Assignment(val topicPartition: TopicPartition, val position: Long)
             val assignment = consumer.assignment().map {
@@ -48,9 +48,7 @@ class Subscription(
         logger.trace("Returned records {}", records)
         return records.asSequence()
                 .map {
-                    val key = it.key()?.let(keyDeserializer::deserialize)
-                    val value = it.value()?.let(valueDeserializer::deserialize)
-                    Pair(key, value)
+                    KafkaRecord(it.key(), it.value(), keyDeserializer, valueDeserializer)
                 }
     }
 
