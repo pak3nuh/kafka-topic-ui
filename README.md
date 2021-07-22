@@ -15,6 +15,13 @@ It uses the kafka client version 2.2.0.
 
 - `gradlew run`
 
+## SSL login
+
+Although the UI is a bit rough around the edges it is possible to login to a secured
+kafka environment with client certificates.
+
+Just chose `SSL` security and pick the certificate files.
+
 ## Views
 
 ### Topic list view
@@ -32,9 +39,11 @@ and resume polls.
 
 Writes are done by reading files on the machine for key and value.
 
+It is also possible to save the byte contents of the record by clicking with the
+secondary mouse button.
+
 ## Features to come
 
-- SSL login
 - Create/Delete topics
 - Finish custom deserializers
 - Save preferences to a file
