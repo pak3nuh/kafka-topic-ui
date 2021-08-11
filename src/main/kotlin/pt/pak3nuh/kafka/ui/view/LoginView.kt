@@ -1,5 +1,6 @@
 package pt.pak3nuh.kafka.ui.view
 
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.control.TextFormatter
@@ -7,20 +8,12 @@ import pt.pak3nuh.kafka.ui.config.SettingsConfig
 import pt.pak3nuh.kafka.ui.controller.LoginController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
 import pt.pak3nuh.kafka.ui.service.broker.Broker
+import pt.pak3nuh.kafka.ui.service.broker.SecurityCredentials
 import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.action
-import tornadofx.bind
-import tornadofx.borderpane
-import tornadofx.bottom
-import tornadofx.button
-import tornadofx.center
-import tornadofx.field
-import tornadofx.fieldset
-import tornadofx.form
-import tornadofx.hbox
-import tornadofx.textfield
+import tornadofx.*
+import java.io.File
 import java.util.function.UnaryOperator
 
 private val logger = getSlfLogger<LoginView>()
@@ -55,6 +48,45 @@ class LoginView : CoroutineView("Login") {
 
                         }
                     }
+                    field("Security") {
+                        choicebox(values = listOf(SecurityType.PLAINTEXT, SecurityType.SSL)) {
+                            bind(viewModel.security)
+                        }
+                    }
+                    field("Truststore") {
+                        button("Pick file") {
+                            action {
+                                chooseFile("Pick certificate", emptyArray(), mode = FileChooserMode.Single)
+                                        .firstOrNull()
+                                        ?.let { file ->
+                                            viewModel.truststoreFile = file
+                                            text = file.name
+                                        }
+                            }
+                        }
+                        // todo mask
+                        label("Password")
+                        textfield {
+                            bind(viewModel.truststorePassword)
+                        }
+                    }
+                    field("Keystore") {
+                        button("Pick file") {
+                            action {
+                                chooseFile("Pick certificate", emptyArray(), mode = FileChooserMode.Single)
+                                        .firstOrNull()
+                                        ?.let { file ->
+                                            viewModel.keystoreFile = file
+                                            text = file.name
+                                        }
+                            }
+                        }
+                        // todo mask
+                        label("Password")
+                        textfield {
+                            bind(viewModel.keystorePassword)
+                        }
+                    }
                 }
             }
         }
@@ -85,11 +117,34 @@ class LoginView : CoroutineView("Login") {
         val host: String = viewModel.hostText.value
         val port: String = viewModel.hostPort.value
         logger.info("Connecting to $host:$port")
-        return controller.getBroker(host, port)
+        return when (requireNotNull(viewModel.security.value)) {
+            SecurityType.PLAINTEXT -> controller.getBroker(host, port)
+            SecurityType.SSL -> {
+                val credentials = SecurityCredentials(
+                        requireNotNull(viewModel.truststoreFile),
+                        requireNotNull(viewModel.keystoreFile),
+                        viewModel.truststorePassword.value ?: "",
+                        viewModel.keystorePassword.value ?: "",
+                        // todo expose
+                        "JKS",
+                        "JKS",
+                )
+                controller.getBrokerSsl(host, port, credentials)
+            }
+        }
     }
 
     private class ViewModel {
         val hostText = SimpleStringProperty()
         val hostPort = SimpleStringProperty()
+        val security = SimpleObjectProperty(SecurityType.PLAINTEXT)
+        var truststoreFile: File? = null
+        var keystoreFile: File? = null
+        val truststorePassword = SimpleStringProperty()
+        val keystorePassword = SimpleStringProperty()
+    }
+
+    private enum class SecurityType {
+        PLAINTEXT, SSL
     }
 }

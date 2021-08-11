@@ -1,11 +1,14 @@
 package pt.pak3nuh.kafka.ui.view
 
 import javafx.beans.property.Property
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.collections.transformation.FilteredList
 import javafx.geometry.Pos
 import javafx.scene.control.ListView
 import javafx.scene.control.SelectionMode
+import javafx.scene.control.ToggleGroup
 import pt.pak3nuh.kafka.ui.config.SettingsConfig
 import pt.pak3nuh.kafka.ui.controller.TopicListController
 import pt.pak3nuh.kafka.ui.log.getSlfLogger
@@ -14,20 +17,9 @@ import pt.pak3nuh.kafka.ui.service.deserializer.DeserializerMetadata
 import pt.pak3nuh.kafka.ui.view.coroutine.CoroutineView
 import pt.pak3nuh.kafka.ui.view.coroutine.fxLaunch
 import pt.pak3nuh.kafka.ui.view.coroutine.onMain
-import tornadofx.action
-import tornadofx.attachTo
-import tornadofx.borderpane
-import tornadofx.button
-import tornadofx.combobox
-import tornadofx.enableWhen
-import tornadofx.hbox
-import tornadofx.label
-import tornadofx.listview
-import tornadofx.observableList
-import tornadofx.textfield
-import tornadofx.titledpane
-import tornadofx.vbox
+import tornadofx.*
 import java.util.function.Predicate
+import kotlin.error
 
 private val logger = getSlfLogger<TopicListView>()
 
@@ -57,7 +49,7 @@ class TopicListView : CoroutineView("Topics") {
 
         center = vbox {
 
-            titledpane("Topics") {
+            titledpane("Topics (requires list topic permission)") {
                 isCollapsible = false
                 topicListView.attachTo(this) {
                     selectionModel.selectionMode = SelectionMode.SINGLE
@@ -88,6 +80,34 @@ class TopicListView : CoroutineView("Topics") {
                 val deserializerList = controller.availableDeserializers().map { ComboDeserializerItem(it) }.toList()
                 viewModel.keyDeserializer = deserializerList[0].metadata
                 viewModel.valueDeserializer = deserializerList[0].metadata
+                vbox {
+                    spacing = 10.0
+                    val toggleGroup = ToggleGroup()
+                    val isCustomTopicNameEnabled = SimpleBooleanProperty()
+
+                    radiobutton("Select form list", toggleGroup) {
+                        isSelected = true
+                        action {
+                            viewModel.selectedTopic.value = null
+                            isCustomTopicNameEnabled.value = false
+                        }
+                    }
+                    hbox {
+                        val customTopicName = SimpleStringProperty()
+                        customTopicName.onChange {
+                            viewModel.selectedTopic.value = Topic(it ?: "")
+                        }
+                        radiobutton("Topic name", toggleGroup) {
+                            action {
+                                isCustomTopicNameEnabled.value = true
+                            }
+                        }
+                        textfield("Custom topic name") {
+                            this.enableWhen(isCustomTopicNameEnabled)
+                            this.bind(customTopicName)
+                        }
+                    }
+                }
                 hbox {
                     spacing = 10.0
                     val enabled = viewModel.selectedTopic.asBoolean { new -> new != null }
@@ -132,6 +152,7 @@ class TopicListView : CoroutineView("Topics") {
 
                     }
                 }
+
             }
 
             titledpane("Selected topic keys preview") {

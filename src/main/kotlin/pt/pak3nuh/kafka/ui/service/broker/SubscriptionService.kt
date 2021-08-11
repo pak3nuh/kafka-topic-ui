@@ -24,7 +24,7 @@ class SubscriptionService @Autowired constructor(
     private val producer: KafkaProducer<ByteArray, ByteArray> by lazy { buildProducer() }
 
     private fun buildProducer(): KafkaProducer<ByteArray, ByteArray> {
-        val kafkaProducer = KafkaProducer<ByteArray, ByteArray>(createProducerProperties("${broker.host}:${broker.port}"))
+        val kafkaProducer = KafkaProducer<ByteArray, ByteArray>(createProducerProperties("${broker.host}:${broker.port}", broker.securityCredentials))
         closeHandlers.add { producer.close(Duration.ofSeconds(1)) }
         return kafkaProducer
     }
@@ -33,7 +33,7 @@ class SubscriptionService @Autowired constructor(
         val key = deserializerProviderService.createDeserializer(keyDeserializer)
         val value = deserializerProviderService.createDeserializer(valueDeserializer)
         val groupId = "kafka-ui-topic-listener-${settingsConfig.applicationUUID}-${topic.name}"
-        val subscription = Subscription(key, value, topic, broker.host, broker.port, groupId)
+        val subscription = Subscription(key, value, topic, broker.host, broker.port, groupId, broker.securityCredentials)
         subscription.initSync()
         return subscription
     }

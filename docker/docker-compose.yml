@@ -2,7 +2,7 @@ version: '2.2'
 
 services:
   kafka:
-    image: wurstmeister/kafka
+    image: wurstmeister/kafka:2.12-2.2.0
     depends_on:
       - zoo
     ports:
@@ -12,8 +12,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_CREATE_TOPICS: test-topic-1:1:1
       # add advertised host to machine hosts file to connect from outside tooling
-      KAFKA_ADVERTISED_HOST_NAME: kafka-broker
-      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_LISTENERS: PLAINTEXT://kafka-broker:9092,SSL://kafka-broker:9091
       KAFKA_LOG_RETENTION_HOURS: "168"
       KAFKA_LOG_RETENTION_BYTES: "100000000"
       KAFKA_ZOOKEEPER_CONNECT:  zookeeper:2181
@@ -23,7 +22,7 @@ services:
           - kafka-broker
 
   zoo:
-    image: elevy/zookeeper:latest
+    image: elevy/zookeeper:v3.4.10
     environment:
       MYID: 1
       SERVERS: zookeeper
