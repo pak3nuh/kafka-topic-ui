@@ -22,6 +22,50 @@ kafka environment with client certificates.
 
 Just chose `SSL` security and pick the certificate files.
 
+#### Building the server key pair
+
+**Very important: Use the `keytool` provided with the JDK. Linux distros have it too but they are different versions
+and support different store types.
+Secure sockets are very nitpicky with cryptic error messages, so minimize the issues by using the proper tool.
+Thank me later**
+
+Just ignore the warning about JSK being proprietary. You'll use this in Java processes anyway.
+
+Create the CA to sign and validate the certificates. Snippets expect the `$PASSWD` env to exit.
+```shell
+openssl req -new -x509 -days 365 -keyout ca.key -out ca.crt -subj "/C=PT/L=Lisbon/CN=Certificate Authority" -passout pass:$PASSWD
+```
+
+Create the server keystore. Don't bother with the SAN names yet because they are rewritten when signing the CSR.
+```shell
+keytool -genkey -keystore server.keystore -alias localhost -dname CN=localhost -keyalg RSA -validity 365 -storepass $PASSWD
+```
+
+Create the certificate request and signs it. In this step we will need the actual SAN defined.
+```shell
+keytool -certreq -keystore server.keystore -alias localhost -file server.unsigned.crt -storepass $PASSWD
+cat << EOF > openssl.signing.conf
+[kafka_req]
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = kafka-broker-1
+DNS.2 = kafka-broker-2
+DNS.3 = localhost
+EOF
+openssl x509 -req -CA ca.crt -CAkey ca.key -in server.unsigned.crt -out server.crt -days 365 -CAcreateserial -extfile openssl.signing.conf -extensions kafka_req -passin pass:$PASSWD
+```
+
+Import the CA certificate and the signed server certificate
+```shell
+keytool -import -file ca.crt -keystore server.keystore -alias ca -storepass $PASSWD -noprompt
+keytool -import -file server.crt -keystore server.keystore -alias localhost -storepass $PASSWD -noprompt
+```
+
+Create the client truststore with the CA certificate
+```shell
+keytool -import -file ca.crt -keystore client.truststore -alias ca -storepass $PASSWD -noprompt
+```
+
 ## Views
 
 ### Topic list view
